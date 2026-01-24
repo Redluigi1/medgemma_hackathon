@@ -1,0 +1,13 @@
+{
+  "patient_info": null,
+  "doctor_info": null,
+  "patient_history": null,
+  "report_summary": {
+    "main_findings": "Fracture of left clavicle confirmed by multiple X-ray images. Complete Blood Count (CBC) and Metabolic Panel results are available.",
+    "patient_explanation": "The patient has a fracture of the left clavicle, also known as the collarbone. This is confirmed by looking at several X-ray images of the shoulder. These X-rays show a break in the bone. Additionally, a blood test called a Complete Blood Count (CBC) and a Metabolic Panel was performed. The blood test results show normal levels for various blood components and chemical values. The patient's current status is stable. Recovery from a clavicle fracture typically involves rest, sometimes using a sling or brace, and physical therapy to regain strength and function, usually taking several weeks to months.",
+    "diagnosis": "Fracture of left clavicle",
+    "recommendations": "Follow-up imaging may be recommended by the physician depending on the fracture type and healing progress."
+  },
+  "medications": [],
+  "next_appointment": null
+}

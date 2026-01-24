@@ -1,0 +1,5 @@
+*.pdf
+.env
+key.json
+__pycache__/
+fine_tune_yolo/

@@ -1,0 +1,89 @@
+2026-01-25 01:22:22 | INFO | Processing PDF: C:\Users\AYUSH\Downloads\medgemma-main\docs.pdf
+2026-01-25 01:22:22 | INFO | Converting PDF: C:\Users\AYUSH\Downloads\medgemma-main\docs.pdf
+2026-01-25 01:22:25 | INFO | Saved page 1: C:\Users\AYUSH\Downloads\medgemma-main\output\pdf_images\docs_page_1.png
+2026-01-25 01:22:25 | INFO | Saved page 2: C:\Users\AYUSH\Downloads\medgemma-main\output\pdf_images\docs_page_2.png
+2026-01-25 01:22:26 | INFO | Saved page 3: C:\Users\AYUSH\Downloads\medgemma-main\output\pdf_images\docs_page_3.png
+2026-01-25 01:22:26 | INFO | Saved page 4: C:\Users\AYUSH\Downloads\medgemma-main\output\pdf_images\docs_page_4.png
+2026-01-25 01:22:26 | INFO | Saved page 5: C:\Users\AYUSH\Downloads\medgemma-main\output\pdf_images\docs_page_5.png
+2026-01-25 01:22:27 | INFO | Saved page 6: C:\Users\AYUSH\Downloads\medgemma-main\output\pdf_images\docs_page_6.png
+2026-01-25 01:22:27 | INFO | Processing PDF: C:\Users\AYUSH\Downloads\medgemma-main\blood.pdf
+2026-01-25 01:22:27 | INFO | Converting PDF: C:\Users\AYUSH\Downloads\medgemma-main\blood.pdf
+2026-01-25 01:22:28 | INFO | Saved page 1: C:\Users\AYUSH\Downloads\medgemma-main\output\pdf_images\blood_page_1.png
+2026-01-25 01:22:28 | INFO | Extracting detailed summary for context...
+2026-01-25 01:23:55 | INFO | [extract_detailed_summary] Prompt: 453 chars | Images: 7 | Response: 8680 chars | Duration: 86.92s
+2026-01-25 01:23:55 | INFO | Detailed summary extracted: 8680 chars
+2026-01-25 01:23:55 | INFO | Processing page 1 for medical images...
+2026-01-25 01:24:06 | INFO | [is_report_page] Prompt: 943 chars | Images: 1 | Response: 175 chars | Duration: 11.32s
+2026-01-25 01:24:06 | INFO | Page classified: is_report=True, type=radiology_report, confidence=high
+2026-01-25 01:24:06 | INFO | Page 1: Classified as radiology_report (confidence: high)
+2026-01-25 01:24:06 | INFO | Extracting tabular data from radiology_report (page 1)...
+2026-01-25 01:24:23 | INFO | [extract_report_tabular_data] Prompt: 1652 chars | Images: 1 | Response: 1199 chars | Duration: 16.86s
+2026-01-25 01:24:23 | INFO | Successfully extracted 0 table(s) from page 1
+2026-01-25 01:24:35 | INFO | [is_full_page_medical_image] Prompt: 1163 chars | Images: 1 | Response: 71 chars | Duration: 11.80s
+2026-01-25 01:24:35 | INFO | Page 1: FULL-PAGE medical image detected - skipping embedded check & CNN
+2026-01-25 01:24:50 | INFO | [describe_medical_image] Prompt: 9470 chars | Images: 1 | Response: 474 chars | Duration: 14.42s
+2026-01-25 01:24:50 | WARNING | Image description response didn't follow expected format
+2026-01-25 01:24:50 | INFO | Processing page 2 for medical images...
+2026-01-25 01:24:57 | INFO | [is_report_page] Prompt: 943 chars | Images: 1 | Response: 169 chars | Duration: 6.58s
+2026-01-25 01:24:57 | INFO | Page classified: is_report=True, type=radiology_report, confidence=high
+2026-01-25 01:24:57 | INFO | Page 2: Classified as radiology_report (confidence: high)
+2026-01-25 01:24:57 | INFO | Extracting tabular data from radiology_report (page 2)...
+2026-01-25 01:25:26 | INFO | [extract_report_tabular_data] Prompt: 1652 chars | Images: 1 | Response: 4340 chars | Duration: 28.78s
+2026-01-25 01:25:26 | INFO | Successfully extracted 1 table(s) from page 2
+2026-01-25 01:25:35 | INFO | [is_full_page_medical_image] Prompt: 1163 chars | Images: 1 | Response: 1085 chars | Duration: 8.93s
+2026-01-25 01:25:35 | INFO | Page 2: FULL-PAGE medical image detected - skipping embedded check & CNN
+2026-01-25 01:25:42 | INFO | [describe_medical_image] Prompt: 9470 chars | Images: 1 | Response: 312 chars | Duration: 7.25s
+2026-01-25 01:25:42 | INFO | Processing page 3 for medical images...
+2026-01-25 01:25:52 | INFO | [is_report_page] Prompt: 943 chars | Images: 1 | Response: 666 chars | Duration: 9.59s
+2026-01-25 01:25:52 | INFO | Page classified: is_report=False, type=not_applicable, confidence=low
+2026-01-25 01:25:59 | INFO | [is_full_page_medical_image] Prompt: 1163 chars | Images: 1 | Response: 200 chars | Duration: 6.94s
+2026-01-25 01:26:08 | INFO | [has_embedded_medical_images] Prompt: 434 chars | Images: 1 | Response: 3 chars | Duration: 9.30s
+2026-01-25 01:26:08 | INFO | Page 3: No medical images detected
+2026-01-25 01:26:08 | INFO | Processing page 4 for medical images...
+2026-01-25 01:26:19 | INFO | [is_report_page] Prompt: 943 chars | Images: 1 | Response: 166 chars | Duration: 10.70s
+2026-01-25 01:26:19 | INFO | Page classified: is_report=False, type=other_report, confidence=medium
+2026-01-25 01:26:28 | INFO | [is_full_page_medical_image] Prompt: 1163 chars | Images: 1 | Response: 207 chars | Duration: 9.11s
+2026-01-25 01:26:37 | INFO | [has_embedded_medical_images] Prompt: 434 chars | Images: 1 | Response: 2 chars | Duration: 8.70s
+2026-01-25 01:26:37 | INFO | Page 4: No medical images detected
+2026-01-25 01:26:37 | INFO | Processing page 5 for medical images...
+2026-01-25 01:26:45 | INFO | [is_report_page] Prompt: 943 chars | Images: 1 | Response: 222 chars | Duration: 8.04s
+2026-01-25 01:26:45 | INFO | Page classified: is_report=True, type=other_report, confidence=high
+2026-01-25 01:26:45 | INFO | Page 5: Classified as other_report (confidence: high)
+2026-01-25 01:26:45 | INFO | Extracting tabular data from other_report (page 5)...
+2026-01-25 01:26:59 | INFO | [extract_report_tabular_data] Prompt: 1644 chars | Images: 1 | Response: 1174 chars | Duration: 13.74s
+2026-01-25 01:26:59 | INFO | Successfully extracted 1 table(s) from page 5
+2026-01-25 01:27:04 | INFO | [is_full_page_medical_image] Prompt: 1163 chars | Images: 1 | Response: 119 chars | Duration: 5.40s
+2026-01-25 01:27:10 | INFO | [has_embedded_medical_images] Prompt: 434 chars | Images: 1 | Response: 3 chars | Duration: 6.33s
+2026-01-25 01:27:10 | INFO | Page 5: No medical images detected
+2026-01-25 01:27:10 | INFO | Processing page 6 for medical images...
+2026-01-25 01:27:21 | INFO | [is_report_page] Prompt: 943 chars | Images: 1 | Response: 366 chars | Duration: 10.44s
+2026-01-25 01:27:21 | INFO | Page classified: is_report=False, type=other_report, confidence=low
+2026-01-25 01:27:29 | INFO | [is_full_page_medical_image] Prompt: 1163 chars | Images: 1 | Response: 123 chars | Duration: 8.56s
+2026-01-25 01:27:39 | INFO | [has_embedded_medical_images] Prompt: 434 chars | Images: 1 | Response: 65 chars | Duration: 9.28s
+2026-01-25 01:27:39 | INFO | Page 6: No medical images detected
+2026-01-25 01:27:39 | INFO | Processing page 1 for medical images...
+2026-01-25 01:27:44 | INFO | [is_report_page] Prompt: 943 chars | Images: 1 | Response: 789 chars | Duration: 5.51s
+2026-01-25 01:27:44 | INFO | Page classified: is_report=True, type=lab_report, confidence=high
+2026-01-25 01:27:44 | INFO | Page 1: Classified as lab_report (confidence: high)
+2026-01-25 01:27:44 | INFO | Extracting tabular data from lab_report (page 1)...
+2026-01-25 01:28:01 | INFO | [extract_report_tabular_data] Prompt: 1640 chars | Images: 1 | Response: 2703 chars | Duration: 16.85s
+2026-01-25 01:28:01 | INFO | Successfully extracted 2 table(s) from page 1
+2026-01-25 01:28:04 | INFO | [is_full_page_medical_image] Prompt: 1163 chars | Images: 1 | Response: 136 chars | Duration: 3.34s
+2026-01-25 01:28:07 | INFO | [has_embedded_medical_images] Prompt: 434 chars | Images: 1 | Response: 3 chars | Duration: 2.44s
+2026-01-25 01:28:07 | INFO | Page 1: No medical images detected
+2026-01-25 01:28:07 | INFO | Starting structured data extraction (3 separate calls)...
+2026-01-25 01:28:07 | INFO | Extracting patient and doctor information...
+2026-01-25 01:29:41 | INFO | [extract_patient_and_doctor_info] Prompt: 1280 chars | Images: 7 | Response: 6245 chars | Duration: 93.99s
+2026-01-25 01:29:41 | INFO | Extracting report summary...
+2026-01-25 01:31:01 | INFO | [extract_report_summary] Prompt: 1381 chars | Images: 7 | Response: 5721 chars | Duration: 79.78s
+2026-01-25 01:31:01 | INFO | Extracting medications and appointments...
+2026-01-25 01:32:33 | INFO | [extract_medications_and_appointments] Prompt: 1243 chars | Images: 7 | Response: 7639 chars | Duration: 91.99s
+2026-01-25 01:32:33 | INFO | extract_medications_and_appointments: Primary parsing failed, attempting LLM cleanup...
+2026-01-25 01:32:33 | INFO | extract_medications_and_appointments: Attempting LLM cleanup of response...
+2026-01-25 01:32:34 | INFO | [extract_medications_and_appointments_cleanup] Prompt: 3797 chars | Images: 0 | Response: 67 chars | Duration: 1.22s
+2026-01-25 01:32:34 | INFO | extract_medications_and_appointments: LLM cleanup successful (code block)!
+2026-01-25 01:32:34 | INFO | Structured data extraction complete
+2026-01-25 01:32:34 | INFO | Report data saved to: C:\Users\AYUSH\Downloads\medgemma-main\output\report_data.json
+2026-01-25 01:32:34 | INFO | Image gallery saved to: C:\Users\AYUSH\Downloads\medgemma-main\output\image_gallery.json
+2026-01-25 01:32:34 | INFO | Tabular reports saved to: C:\Users\AYUSH\Downloads\medgemma-main\output\tabular_reports.json
+2026-01-25 01:32:34 | INFO | Processing complete! LLM call summary: {'total_calls': 30, 'successful': 30, 'failed': 0, 'total_duration_seconds': 604.11, 'avg_duration_seconds': 20.14, 'total_images_processed': 53}

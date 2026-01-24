@@ -1,0 +1,216 @@
+{
+  "tabular_reports": [
+    {
+      "report_date": null,
+      "lab_name": null,
+      "patient_id": null,
+      "doctor_name": null,
+      "sample_type": null,
+      "collection_time": null,
+      "source_pdf": "docs",
+      "page_number": 1,
+      "image_path": "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_1.png"
+    },
+    {
+      "page_type": "radiology_report",
+      "tables": [
+        {
+          "table_name": "Finding",
+          "columns": [
+            "Finding",
+            "Location",
+            "Description"
+          ],
+          "rows": [
+            [
+              "Fracture shaft of left clavicle with nailing and plate in situ.",
+              "LEFT SHOULDER AP",
+              "Fracture shaft of left clavicle with nailing and plate in situ. Rest of the visualized bones are normal."
+            ]
+          ]
+        }
+      ],
+      "metadata": {
+        "report_date": "08.05.2024",
+        "lab_name": "SEEMA DIAGNOSTIC CENTER",
+        "patient_id": "AYUSH KUMAR",
+        "doctor_name": "Dr. Manoj Kumar",
+        "sample_type": null,
+        "collection_time": null
+      },
+      "source_pdf": "docs",
+      "page_number": 2,
+      "image_path": "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_2.png"
+    },
+    {
+      "page_type": "other_report",
+      "tables": [
+        {
+          "table_name": "Billing Details",
+          "columns": [
+            "Sno",
+            "Department",
+            "Items",
+            "Quantity",
+            "Unit Price",
+            "Dis (%)",
+            "Total"
+          ],
+          "rows": [
+            [
+              "1",
+              "Package",
+              "Surgeon Charge + Implant",
+              "1",
+              "77000",
+              "",
+              "77000"
+            ],
+            [
+              "2",
+              "Package",
+              "OT Charge + OT Medicine",
+              "1",
+              "18000",
+              "",
+              "18000"
+            ],
+            [
+              "3",
+              "Package",
+              "Anaesthesia (Anesthetic charge, Anesthesia machine charge)",
+              "1",
+              "5000",
+              "",
+              "5000"
+            ],
+            [
+              "4",
+              "Package",
+              "Hospital stay",
+              "1",
+              "10000",
+              "",
+              "110000"
+            ]
+          ]
+        }
+      ],
+      "metadata": {
+        "report_date": "29/03/2024",
+        "lab_name": "Advanced Neuro Hospital",
+        "patient_id": "202312-09",
+        "doctor_name": "null",
+        "sample_type": "null",
+        "collection_time": "null"
+      },
+      "source_pdf": "docs",
+      "page_number": 5,
+      "image_path": "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_5.png"
+    },
+    {
+      "page_type": "lab_report",
+      "tables": [
+        {
+          "table_name": "Hematology - Complete Blood Count (CBC)",
+          "columns": [
+            "Test Name",
+            "Result",
+            "Reference Range",
+            "Units"
+          ],
+          "rows": [
+            [
+              "White Blood Cell (WBC)",
+              "8.4",
+              "4.5 - 11.0",
+              "x 10^3/µL"
+            ],
+            [
+              "Red Blood Cell (RBC)",
+              "4.92",
+              "4.50 - 5.90",
+              "x 10^6/µL"
+            ],
+            [
+              "Hemoglobin (Hgb)",
+              "14.1",
+              "13.5 - 17.5",
+              "g/dL"
+            ],
+            [
+              "Hematocrit (Hct)",
+              "42.5",
+              "41.0 - 50.0",
+              "%"
+            ],
+            [
+              "Platelets",
+              "135",
+              "150 - 450",
+              "x 10^3/µL"
+            ]
+          ]
+        },
+        {
+          "table_name": "Metabolic & Chemistry",
+          "columns": [
+            "Test Name",
+            "Result",
+            "Reference Range",
+            "Units"
+          ],
+          "rows": [
+            [
+              "Glucose (Fasting)",
+              "108",
+              "70 - 99",
+              "mg/dL"
+            ],
+            [
+              "Creatinine",
+              "0.95",
+              "0.70 - 1.30",
+              "mg/dL"
+            ],
+            [
+              "Sodium",
+              "139",
+              "136 - 145",
+              "mEq/L"
+            ],
+            [
+              "Potassium",
+              "4.2",
+              "3.5 - 5.1",
+              "mEq/L"
+            ],
+            [
+              "ALT (Alanine Aminotransferase)",
+              "58",
+              "7 - 55",
+              "U/L"
+            ],
+            [
+              "AST (Aspartate Aminotransferase)",
+              "42",
+              "8 - 48",
+              "U/L"
+            ]
+          ]
+        }
+      ],
+      "metadata": {
+        "report_date": "2026-01-24",
+        "lab_name": "NeoGen Diagnostics Laboratory",
+        "patient_id": "AS-99402",
+        "doctor_name": "Dr. E. Vance",
+        "sample_type": null,
+        "collection_time": null
+      },
+      "source_pdf": "blood",
+      "page_number": 1,
+      "image_path": "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
+    }
+  ]
+}
