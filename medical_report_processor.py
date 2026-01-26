@@ -54,6 +54,7 @@ class MedicalReportProcessor:
         self.detailed_summary = ""  # Extracted first, used as context for image descriptions
         self.tabular_reports = []  # Store extracted tabular data from report pages
         self.page_image_map = {}  # Maps page_num to image_path for context
+        self.page_texts = []  # Extracted text from each page for text-based processing
     
     # ==================== PDF TO IMAGE CONVERSION ====================
     
@@ -268,6 +269,83 @@ Answer with ONLY 'YES' or 'NO'.
         
         return "YES" in response.upper()
     
+    def classify_and_extract_text(self, image_path: str) -> dict:
+        """
+        Combined API call that classifies the page AND extracts all text in one call.
+        This saves costs by avoiding separate calls for classification and text extraction.
+        
+        Args:
+            image_path: Path to the PDF page image
+            
+        Returns:
+            Dict with:
+            - is_full_page_medical_image: bool
+            - has_embedded_medical_images: bool
+            - extracted_text: str (all text from the page)
+        """
+        prompt = """Analyze this PDF page and provide THREE things:
+
+1. IS_FULL_PAGE_SCAN: Is MORE than 90% of this page a medical scan (X-ray, CT, MRI, ultrasound)?
+   - Answer YES if the scan fills most of the page with minimal text (just labels at edges)
+   - Answer NO if it's a text document, lab report, form, bill, or has significant text content
+
+2. HAS_EMBEDDED_SCANS: Does this page contain any embedded medical imaging scans mixed with text?
+   - Answer YES if there are any X-rays, CT scans, MRI images visible within text/forms
+   - Answer NO if the page only has text, tables, or forms without any medical images
+
+3. EXTRACTED_TEXT: Extract ALL readable text from this page. Include:
+   - Patient names, ages, dates
+   - Doctor names, hospital/clinic names
+   - Test names and values
+   - Medications listed
+   - Diagnoses and findings
+   - Appointment dates
+   - Any other relevant text
+
+Format your response EXACTLY as:
+IS_FULL_PAGE_SCAN: YES or NO
+HAS_EMBEDDED_SCANS: YES or NO
+EXTRACTED_TEXT:
+[all the text content from the page goes here]"""
+
+        response = self._call_llm_with_logging(
+            prompt=prompt,
+            image_paths=[image_path],
+            function_name="classify_and_extract_text",
+            system_prompt="You are a medical document analyzer. Classify the page type accurately and extract all text content verbatim."
+        )
+        
+        result = {
+            "is_full_page_medical_image": False,
+            "has_embedded_medical_images": False,
+            "extracted_text": ""
+        }
+        
+        response_upper = response.upper()
+        
+        # Parse IS_FULL_PAGE_SCAN
+        full_page_match = re.search(r'IS_FULL_PAGE_SCAN:\s*(YES|NO)', response_upper)
+        if full_page_match:
+            result["is_full_page_medical_image"] = full_page_match.group(1) == 'YES'
+        
+        # Parse HAS_EMBEDDED_SCANS
+        embedded_match = re.search(r'HAS_EMBEDDED_SCANS:\s*(YES|NO)', response_upper)
+        if embedded_match:
+            result["has_embedded_medical_images"] = embedded_match.group(1) == 'YES'
+        
+        # Parse EXTRACTED_TEXT (everything after "EXTRACTED_TEXT:")
+        text_match = re.search(r'EXTRACTED_TEXT:\s*\n?(.*)', response, re.DOTALL | re.IGNORECASE)
+        if text_match:
+            result["extracted_text"] = text_match.group(1).strip()
+        
+        self.logger.logger.info(
+            f"Page classified: is_full_page={result['is_full_page_medical_image']}, "
+            f"has_embedded={result['has_embedded_medical_images']}, "
+            f"text_length={len(result['extracted_text'])} chars"
+        )
+        
+        return result
+    
     def is_report_page(self, image_path: str) -> dict:
         """
         Classify if a page is a structured report (lab results, prescriptions, etc.).
@@ -283,6 +361,7 @@ Answer with ONLY 'YES' or 'NO'.
 
 A STRUCTURED REPORT includes:
 - Lab test results with values in tables or lists
+- medical bills/money receipts
 - Blood work / pathology reports with test names and numerical values
 - Prescription lists with medications, dosages
 - Discharge summaries with structured sections
@@ -291,14 +370,13 @@ A STRUCTURED REPORT includes:
 
 NOT a structured report:
 - Full-page medical images (X-rays, CT scans, MRI)
-- Bills, invoices, or payment receipts
 - Handwritten doctor's notes without structure
 - Blank or mostly empty pages
 - Cover pages or headers only
 
 Respond in this EXACT format:
 IS_REPORT: YES or NO
-REPORT_TYPE: [lab_report / prescription / radiology_report / discharge_summary / vitals_report / other_report / not_applicable/ medical_bill]
+REPORT_TYPE: [lab_report / prescription / radiology_report / discharge_summary / vitals_report / medical_bill / other_report]
 CONFIDENCE: [high / medium / low]
 REASON: [1 sentence explanation]"""
 
@@ -408,8 +486,28 @@ Output ONLY the JSON object, no other text or markdown."""
             system_prompt="You are an expert medical data extraction system. Output ONLY valid JSON with precise tabular data."
         )
         
-        # Parse the response
-        parsed_data = self._parse_json_from_llm_response(response, "extract_report_tabular_data")
+        # Define expected schema for cleanup fallback
+        expected_schema = """{
+    "page_type": "string",
+    "tables": [
+        {
+            "table_name": "string",
+            "columns": ["string", ...],
+            "rows": [["string", ...], ...]
+        }
+    ],
+    "metadata": {
+        "report_date": "string or null",
+        "lab_name": "string or null",
+        "patient_id": "string or null",
+        "doctor_name": "string or null",
+        "sample_type": "string or null",
+        "collection_time": "string or null"
+    }
+}"""
+        
+        # Parse the response with expected_schema to enable LLM cleanup fallback
+        parsed_data = self._parse_json_from_llm_response(response, "extract_report_tabular_data", expected_schema)
         
         # Add source information
         parsed_data["source_pdf"] = source_pdf
@@ -590,11 +688,13 @@ DESCRIPTION: [your actual description text here - 3-5 sentences for the patient 
     def process_page_for_medical_images(self, image_path: str, source_pdf: str, page_num: int):
         """
         Process a single PDF page for medical images AND structured reports.
+        Also extracts text from the page in a single combined API call for cost savings.
         
         Logic (two-stage for reports):
-        1. FIRST: Classify if this is a structured report -> extract tabular data with specialized agent
-        2. Check if full-page medical image -> save it, skip CNN
-        3. Otherwise check for embedded images -> run CNN to extract sub-images
+        1. FIRST: Classify page AND extract text in one call (cost optimization)
+        2. If structured report -> extract tabular data with specialized agent
+        3. Check if full-page medical image -> save it, skip CNN
+        4. Otherwise check for embedded images -> run CNN to extract sub-images
         
         Args:
             image_path: Path to the PDF page image
@@ -606,8 +706,23 @@ DESCRIPTION: [your actual description text here - 3-5 sentences for the patient 
         # Store page image path for context when describing sub-images
         self.page_image_map[page_num] = image_path
         
+        # === COMBINED CLASSIFICATION AND TEXT EXTRACTION (cost optimization) ===
+        # Single API call to classify page type AND extract all text
+        classification = self.classify_and_extract_text(image_path)
+        
+        # Store extracted text for later text-based extraction
+        if classification["extracted_text"]:
+            self.page_texts.append({
+                "page_num": page_num,
+                "source_pdf": source_pdf,
+                "text": classification["extracted_text"]
+            })
+        
+        is_full_page = classification["is_full_page_medical_image"]
+        has_embedded = classification["has_embedded_medical_images"]
+        
         # === TWO-STAGE REPORT PROCESSING ===
-        # Stage 1: Classify if this is a structured report page
+        # Stage 1: Classify if this is a structured report page (using separate call for now)
         report_classification = self.is_report_page(image_path)
         
         if report_classification["is_report"]:
@@ -623,9 +738,7 @@ DESCRIPTION: [your actual description text here - 3-5 sentences for the patient 
             # as some reports may contain embedded images (e.g., radiology reports with X-rays)
         
         # === MEDICAL IMAGE PROCESSING ===
-        # Step 1: Is this a full-page medical image?
-        is_full_page = self.is_full_page_medical_image(image_path)
-        
+        # Use classification results from combined call
         if is_full_page:
             self.logger.logger.info(f"Page {page_num}: FULL-PAGE medical image detected - skipping embedded check & CNN")
             
@@ -648,8 +761,8 @@ DESCRIPTION: [your actual description text here - 3-5 sentences for the patient 
             # Return early - do NOT check for embedded images or run CNN
             return
         
-        # Step 2: NOT a full-page scan. Check if it has embedded medical images among text
-        if self.has_embedded_medical_images(image_path):
+        # Check for embedded images using classification result
+        if has_embedded:
             self.logger.logger.info(f"Page {page_num}: Has embedded medical images, running CNN...")
             
             # Use YOLO to find bounding boxes
@@ -748,16 +861,61 @@ Keep the summary to 150-200 words."""
             
             # Try to extract JSON from markdown code blocks first
             if "```json" in cleaned_response or "```" in cleaned_response:
-                # Find all JSON code blocks
-                json_blocks = re.findall(r'```(?:json)?\s*([\{\[][\s\S]*?[\}\]])\s*```', cleaned_response, re.DOTALL)
-                if json_blocks:
-                    json_candidates.extend(json_blocks)
+                # Find code block boundaries and extract content between them
+                code_block_pattern = re.compile(r'```(?:json)?\s*([\s\S]*?)\s*```', re.DOTALL)
+                for match in code_block_pattern.finditer(cleaned_response):
+                    block_content = match.group(1).strip()
+                    # Use brace matching to extract complete JSON from the block
+                    if block_content.startswith('{') or block_content.startswith('['):
+                        # Find the complete JSON object using brace counting
+                        brace_count = 0
+                        bracket_count = 0
+                        start_idx = 0
+                        end_idx = len(block_content)
+                        for i, char in enumerate(block_content):
+                            if char == '{':
+                                brace_count += 1
+                            elif char == '}':
+                                brace_count -= 1
+                                if brace_count == 0 and bracket_count == 0:
+                                    end_idx = i + 1
+                                    break
+                            elif char == '[':
+                                bracket_count += 1
+                            elif char == ']':
+                                bracket_count -= 1
+                                if bracket_count == 0 and brace_count == 0:
+                                    end_idx = i + 1
+                                    break
+                        json_candidates.append(block_content[start_idx:end_idx])
             
-            # If no code blocks found, try to find raw JSON structures
+            # If no code blocks found, try to find raw JSON structures using brace matching
             if not json_candidates:
-                # Find all JSON-like structures (objects or arrays)
-                raw_jsons = re.findall(r'([\{\[][\s\S]*?[\}\]])', cleaned_response)
-                json_candidates.extend(raw_jsons)
+                # Find the start of JSON objects or arrays and use brace counting
+                for i, char in enumerate(cleaned_response):
+                    if char in ('{', '['):
+                        # Use brace matching to find the complete JSON
+                        brace_count = 0
+                        bracket_count = 0
+                        for j in range(i, len(cleaned_response)):
+                            c = cleaned_response[j]
+                            if c == '{':
+                                brace_count += 1
+                            elif c == '}':
+                                brace_count -= 1
+                                if brace_count == 0 and bracket_count == 0:
+                                    json_candidates.append(cleaned_response[i:j+1])
+                                    break
+                            elif c == '[':
+                                bracket_count += 1
+                            elif c == ']':
+                                bracket_count -= 1
+                                if bracket_count == 0 and brace_count == 0:
+                                    json_candidates.append(cleaned_response[i:j+1])
+                                    break
+                        # Only try to find the first complete JSON structure
+                        if json_candidates:
+                            break
             
             # Remove comments (// ...) which are invalid in standard JSON
             cleaned_candidates = []
@@ -916,6 +1074,7 @@ RULES:
 2. Extract ALL medical data you can find (diagnoses, findings, treatments, etc.)
 3. If a field is not found, use null
 4. Do NOT refuse or explain - just output the JSON
+5. Do not leave out any information from the text
 
 TEXT TO EXTRACT FROM:
 {truncated_response}
@@ -1071,13 +1230,13 @@ Respond with ONLY this JSON (no other text):
         
         prompt = """CRITICAL: Output ONLY a valid JSON object. Do NOT include any text before or after the JSON.
 
-Read the medical documents and create a clear, helpful summary for a patient.
+The images are of a patients medical report. Read the medical documents and create a clear, helpful summary for a patient.
 
 FIELD DEFINITIONS:
 
 1. main_findings: A brief medical summary (2-3 sentences about what was found).
 
-2. patient_explanation: A detailed explanation (5-8 sentences) covering:
+2. patient_explanation: A detailed explanation covering:
    - What condition/injury was found
    - What tests or imaging were done (X-ray, CT scan, blood test, etc.)
    - What the test results showed
@@ -1085,9 +1244,9 @@ FIELD DEFINITIONS:
    - Current status and expected recovery time
    Use simple, non-medical language a patient can understand.
 
-3. diagnosis: The specific medical condition or diagnosis (e.g., "Fracture of left clavicle").
+3. diagnosis: The specific medical condition or diagnosis 
 
-4. recommendations: What the doctor advises for follow-up (e.g., "Follow-up X-ray in 6 weeks").
+4. recommendations: What the doctor advises for follow-up.
 
 WHAT TO IGNORE: Hospital names, addresses, bill amounts, invoice numbers.
 
@@ -1095,7 +1254,7 @@ Output ONLY this JSON structure (nothing else - no explanations, no thinking):
 {
     "report_summary": {
         "main_findings": "brief medical findings summary",
-        "patient_explanation": "detailed 5-8 sentence patient-friendly explanation",
+        "patient_explanation": "detailed patient-friendly explanation",
         "diagnosis": "specific medical diagnosis",
         "recommendations": "doctor's advice for follow-up"
     }
@@ -1179,27 +1338,197 @@ Respond with ONLY this JSON (no other text):
         
         return self._parse_json_from_llm_response(response, "extract_medications_and_appointments", expected_schema)
     
-    def extract_all_structured_data(self, image_paths: list):
+    def extract_medications_and_appointments_from_text(self, text: str) -> dict:
         """
-        Extract all structured data from PDF images using multiple focused calls.
-        This method orchestrates three separate extraction calls for robustness.
+        Extract medications and appointments from pre-extracted text.
+        This is a cost-saving alternative that uses text-only LLM call.
+        
+        Args:
+            text: Combined text extracted from all PDF pages
+            
+        Returns:
+            Dictionary with medications and next_appointment
+        """
+        self.logger.logger.info("Extracting medications and appointments from text...")
+        
+        prompt = f"""You are extracting PRESCRIPTION and APPOINTMENT information from the following medical document text.
+
+DOCUMENT TEXT:
+{text}
+
+TASK: Find any prescribed medications and scheduled follow-up appointments.
+
+WHAT TO EXTRACT:
+
+1. medications: List of prescribed drugs/medicines
+   - name: The medicine/drug name (e.g., "Paracetamol", "Amoxicillin", "Calcium supplement")
+   - dosage: Amount per dose (e.g., "500mg", "10ml")
+   - frequency: How often to take (e.g., "twice daily", "every 8 hours", "after meals")
+   - duration: How long to take (e.g., "7 days", "2 weeks", "till next visit")
+
+2. next_appointment: When to return for follow-up
+   GOOD EXAMPLE: "15th February 2024" or "After 6 weeks" or "In 2 months"
+
+WHAT TO IGNORE:
+- Diagnosis or condition names (those are NOT medications)
+- Medical equipment or implants (plates, screws, etc. are NOT medications)
+- Bill items and costs
+- Test names
+
+If no medications are prescribed, return an empty array [].
+
+Respond with ONLY this JSON (no other text):
+{{
+    "medications": [
+        {{
+            "name": "medicine name",
+            "dosage": "amount per dose or null",
+            "frequency": "how often or null",
+            "duration": "how long or null"
+        }}
+    ],
+    "next_appointment": "follow-up date/time or null"
+}}"""
+
+        response = self._call_llm_with_logging(
+            prompt=prompt,
+            image_paths=None,  # Text-only call
+            function_name="extract_medications_and_appointments_from_text",
+            system_prompt="You are a pharmacist extracting prescription details. Only include actual medications (drugs/medicines), not diagnoses or medical devices."
+        )
+        
+        expected_schema = """{
+    "medications": [{"name": "string", "dosage": "string or null", "frequency": "string or null", "duration": "string or null"}],
+    "next_appointment": "string or null"
+}"""
+        
+        return self._parse_json_from_llm_response(response, "extract_medications_and_appointments_from_text", expected_schema)
+    
+    def extract_patient_and_doctor_info_from_text(self, text: str) -> dict:
+        """
+        Extract patient and doctor info from pre-extracted text.
+        This is a cost-saving alternative that uses text-only LLM call.
+        
+        Args:
+            text: Combined text extracted from all PDF pages
+            
+        Returns:
+            Dictionary with patient_info, doctor_info, patient_history
+        """
+        self.logger.logger.info("Extracting patient and doctor information from text...")
+        
+        prompt = f"""You are extracting DEMOGRAPHIC INFORMATION from the following medical document text.
+
+DOCUMENT TEXT:
+{text}
+
+TASK: Find and extract ONLY the patient's personal details and doctor's contact information.
+
+WHAT TO EXTRACT:
+- patient_info.name: The PATIENT's full name (the person receiving medical care)
+- patient_info.age: The patient's age in years
+- patient_info.sex: Male, Female, or Other
+- doctor_info.name: The DOCTOR's name (usually has "Dr." prefix)
+- doctor_info.phone: Doctor's phone number
+- doctor_info.email: Doctor's email address
+- patient_history: Any mentioned past medical conditions, allergies, or previous treatments
+
+WHAT TO IGNORE:
+- Hospital/clinic names and addresses (these are NOT the patient or doctor name)
+- Bill amounts, invoice numbers, bank details
+- Test results and findings (those go elsewhere)
+- Dates of visits (unless it's medical history)
+
+Respond with ONLY this JSON (no other text):
+{{
+    "patient_info": {{
+        "name": "patient's full name or null",
+        "age": "age in years or null",
+        "sex": "Male/Female/Other or null"
+    }},
+    "doctor_info": {{
+        "name": "doctor's name (with Dr. prefix) or null",
+        "phone": "phone number or null",
+        "email": "email or null"
+    }},
+    "patient_history": "past medical conditions/allergies mentioned or null"
+}}"""
+
+        response = self._call_llm_with_logging(
+            prompt=prompt,
+            image_paths=None,  # Text-only call
+            function_name="extract_patient_and_doctor_info_from_text",
+            system_prompt="You are a medical records specialist. Extract ONLY demographic data. Do NOT include addresses, hospital names, or financial information."
+        )
+        
+        expected_schema = """{
+    "patient_info": {"name": "string or null", "age": "string or null", "sex": "string or null"},
+    "doctor_info": {"name": "string or null", "phone": "string or null", "email": "string or null"},
+    "patient_history": "string or null"
+}"""
+        
+        return self._parse_json_from_llm_response(response, "extract_patient_and_doctor_info_from_text", expected_schema)
+    
+    def extract_all_structured_data(self, image_paths: list, first_page_images: list = None):
+        """
+        Extract all structured data from PDF using text-based extraction for cost savings.
+        Uses pre-extracted text from page processing when available.
+        Falls back to image-based extraction if no text was extracted.
         
         Note: Lab results are extracted via the two-stage report extraction process
         and saved to tabular_reports.json, so they are not duplicated here.
         
         Args:
             image_paths: List of paths to PDF page images
+            first_page_images: Optional list of first page images from each PDF (for patient/doctor info)
         """
-        self.logger.logger.info("Starting structured data extraction (3 separate calls)...")
+        # Use first page images for patient/doctor info if provided, otherwise use all images
+        patient_info_images = first_page_images if first_page_images else image_paths
         
-        # Call 1: Patient info, doctor info, and patient history
-        patient_doctor_data = self.extract_patient_and_doctor_info(image_paths)
+        # Combine text from first pages only for patient/doctor info extraction
+        first_page_text = ""
+        if self.page_texts and first_page_images:
+            # Get text only from first pages (page_num == 1)
+            first_page_texts = [pt for pt in self.page_texts if pt['page_num'] == 1]
+            if first_page_texts:
+                first_page_text = "\n\n--- PAGE BREAK ---\n\n".join([
+                    f"[Page {pt['page_num']} from {pt['source_pdf']}]\n{pt['text']}" 
+                    for pt in first_page_texts
+                ])
+                self.logger.logger.info(f"Using first page text for patient/doctor info extraction ({len(first_page_text)} chars)")
         
-        # Call 2: Report summary
+        # Combine all extracted text from pages for medications
+        combined_text = ""
+        if self.page_texts:
+            combined_text = "\n\n--- PAGE BREAK ---\n\n".join([
+                f"[Page {pt['page_num']} from {pt['source_pdf']}]\n{pt['text']}" 
+                for pt in self.page_texts
+            ])
+            self.logger.logger.info(f"Using pre-extracted text for structured data extraction ({len(combined_text)} chars)")
+        
+        if first_page_text:
+            # Use text-based extraction for patient/doctor info from first pages only
+            self.logger.logger.info("Starting patient/doctor info extraction from FIRST PAGE TEXT (cost-optimized)...")
+            patient_doctor_data = self.extract_patient_and_doctor_info_from_text(first_page_text)
+        elif combined_text:
+            # Fallback to all text if first page text not available
+            self.logger.logger.info("Starting patient/doctor info extraction from all TEXT...")
+            patient_doctor_data = self.extract_patient_and_doctor_info_from_text(combined_text)
+        else:
+            # Fallback: Use image-based extraction if no text was extracted
+            self.logger.logger.warning("No pre-extracted text available, falling back to image-based extraction...")
+            # Use only first page images for patient/doctor info
+            patient_doctor_data = self.extract_patient_and_doctor_info(patient_info_images)
+        
+        if combined_text:
+            # Call 2: Medications and next appointment (from all text)
+            meds_data = self.extract_medications_and_appointments_from_text(combined_text)
+        else:
+            # Call 2: Medications and next appointment (from images)
+            meds_data = self.extract_medications_and_appointments(image_paths)
+        
+        # Call 3: Report summary (still uses images for visual context)
         summary_data = self.extract_report_summary(image_paths)
-        
-        # Call 3: Medications and next appointment
-        meds_data = self.extract_medications_and_appointments(image_paths)
         
         # Note: Lab results are NOT extracted here - they are captured via the
         # two-stage report extraction (is_report_page -> extract_report_tabular_data)
@@ -1246,6 +1575,7 @@ Respond with ONLY this JSON (no other text):
             Dictionary with report_data and image_gallery paths
         """
         all_page_images = []
+        first_page_images = []  # Store first page from each PDF for patient/doctor info
         pdf_to_pages = {}  # Store pages per PDF for processing
         
         # Step 1: Convert all PDFs to images first
@@ -1256,6 +1586,10 @@ Respond with ONLY this JSON (no other text):
             page_images = self.convert_pdf_to_images(pdf_path)
             pdf_to_pages[pdf_name] = page_images
             all_page_images.extend(page_images)
+            
+            # Collect first page from each PDF for patient/doctor info extraction
+            if page_images:
+                first_page_images.append(page_images[0])
         
         # Step 2: Extract detailed summary FIRST (needed as context for image descriptions)
         self.extract_detailed_summary(all_page_images)
@@ -1265,8 +1599,8 @@ Respond with ONLY this JSON (no other text):
             for i, img_path in enumerate(page_images):
                 self.process_page_for_medical_images(img_path, pdf_name, i + 1)
         
-        # Step 4: Extract structured data from all pages
-        self.extract_all_structured_data(all_page_images)
+        # Step 4: Extract structured data (uses first pages only for patient/doctor info)
+        self.extract_all_structured_data(all_page_images, first_page_images)
         
         # Step 5: Save outputs
         report_path = self.output_dir / "report_data.json"

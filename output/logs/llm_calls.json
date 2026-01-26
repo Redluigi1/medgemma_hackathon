@@ -1,6 +1,6 @@
 [
   {
-    "timestamp": "2026-01-25T01:23:55.434179",
+    "timestamp": "2026-01-26T01:23:08.806885",
     "function": "extract_detailed_summary",
     "prompt": "Analyze these medical report pages and provide a DETAILED SUMMARY suitable for a patient to understand.\n\nInclude:\n1. What medical condition/issue is being reported\n2. What tests/procedures were done\n3. What the findings show\n4. Any treatments or surgeries that were performed\n5. The current status and prognosis\n\nWrite in clear, simple language a patient can understand. Be thorough but avoid excessive medical jargon.\nKeep the summary to 150-200 words.",
     "prompt_length": 453,
@@ -14,31 +14,47 @@
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
     ],
     "num_images": 7,
-    "response": "FINDINGS SUMMARY:\n\n**Report Type:** CT SCAN, Shoulder AP (X-ray)\n**Patient Name:** AYUSH KUMAR\n**Age:** 19 years\n**Gender:** Male\n\n**Condition/Issue:**\nThis report is a shoulder X-ray (AP view) taken on [Date]. It was performed to assess the patient's shoulder joint.\n**Tests/Procedures Done:**\nA shoulder AP X-ray was performed.\n**Findings:**\nThe X-ray shows a slight fracture in the shoulder (clavicle). The fracture appears to be in the middle part of the clavicle (collarbone). The bone appears to be healing and has a few small fragments. The bone appears to be slightly displaced.\n**Treatments/Surgeries:**\nNo surgeries were performed.\n**Current Status:**\nThe patient has a fracture in their right shoulder clavicle. The fracture is healing, but there are signs of displacement.\n**Prognosis:**\nThe prognosis is generally good with proper immobilization and healing, but close follow-up is needed to monitor the healing process and ensure proper alignment.\n\n**Report Type:** CT SCAN, Joint\n**Pat...",
-    "response_length": 8680,
-    "duration_seconds": 86.921,
+    "response": "FINDINGS:\n\n**Report 1: X-ray Left Shoulder**\n\n*   **Condition:** Shoulder Joint X-ray\n*   **Tests Performed:** X-ray of the left shoulder joint.\n*   **Findings:** The report indicates \"Screw gone, Joint replaced with metal plate\" and the image shows a metal screw and plate visible in the shoulder joint. The bone appears intact, and there are no visible fractures or dislocations. The radiologist notes \"Fracture shaft of clavicle with plate seen in situ\".\n*   **Treatments/Surgeries:** Surgery involving shoulder joint replacement with a metal plate and screw is mentioned.\n*   **Current Status:** Patient had shoulder surgery for joint replacement. The surgical implants (plate/screw) are visible on the x-ray. The overall x-ray findings appear normal.\n*   **Prognosis:** The prognosis related to the joint replacement is generally good, but long-term recovery and function depend on individual factors and post-operative care.\n\n**Report 2: X-ray Right Shoulder**\n\n*   **Condition:** Shoulder Join...",
+    "response_length": 5396,
+    "duration_seconds": 32.21,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:24:06.754934",
-    "function": "is_report_page",
-    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a structured report:\n- Full-page me...",
-    "prompt_length": 943,
+    "timestamp": "2026-01-26T01:23:13.717615",
+    "function": "classify_and_extract_text",
+    "prompt": "Analyze this PDF page and provide THREE things:\n\n1. IS_FULL_PAGE_SCAN: Is MORE than 90% of this page a medical scan (X-ray, CT, MRI, ultrasound)?\n   - Answer YES if the scan fills most of the page with minimal text (just labels at edges)\n   - Answer NO if it's a text document, lab report, form, bill, or has significant text content\n\n2. HAS_EMBEDDED_SCANS: Does this page contain any embedded medical imaging scans mixed with text?\n   - Answer YES if there are any X-rays, CT scans, MRI images visib...",
+    "prompt_length": 1037,
     "image_paths": [
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_1.png"
     ],
     "num_images": 1,
-    "response": "IS_REPORT: YES\nREPORT_TYPE: radiology_report\nCONFIDENCE: high\nREASON: The image displays an X-ray of a shoulder, a common type of radiology report containing medical findings.",
-    "response_length": 175,
-    "duration_seconds": 11.32,
+    "response": "IS_FULL_PAGE_SCAN: NO\nHAS_EMBEDDED_SCANS: NO\nEXTRACTED_TEXT:\nAYUSH KUMAR (20) M, 19 years (s)\nSHOULDER AP VIEW,\nRADHAKRISHNAN AYURVEDIC CLINIC, EAST BERING CANAL ROAD, PATNA-01\n\"},{\"DR. R. RAMAKANT\nKUMAR\"},{\"85 05 2024\"\n2024-10-02\n\"]},\nচট্টগ্রাম mini\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+    "response_length": 264,
+    "duration_seconds": 4.911,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:24:23.618335",
+    "timestamp": "2026-01-26T01:23:17.357138",
+    "function": "is_report_page",
+    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- medical bills/money receipts\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a st...",
+    "prompt_length": 919,
+    "image_paths": [
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_1.png"
+    ],
+    "num_images": 1,
+    "response": "IS_REPORT: YES\nREPORT_TYPE: radiology_report\nCONFIDENCE: high\nREASON: The image displays an X-ray of a shoulder joint, which is a type of radiological report. It contains patient demographics and a description of the imaging findings.\n",
+    "response_length": 235,
+    "duration_seconds": 3.64,
+    "success": true,
+    "error": null,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-26T01:23:59.847136",
     "function": "extract_report_tabular_data",
     "prompt": "You are a specialized medical report data extractor. This page is a radiology_report.\n\nExtract ALL tabular/structured data from this page into a standardized format.\n\nCRITICAL RULES:\n1. Extract EVERY table, list, or structured section you can find\n2. Preserve the exact values, units, and reference ranges\n3. For each table, define the column headers and then list each row\n4. Mark abnormal values with status \"High\", \"Low\", or \"Abnormal\" if indicated\n5. If a field is not present, use null\n\nRespond ...",
     "prompt_length": 1652,
@@ -46,223 +62,175 @@
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_1.png"
     ],
     "num_images": 1,
-    "response": "<unused94>thought\nThe user wants me to extract tabular data from a radiology report image.\n\n1.  **Identify the page type:** The image shows a medical image (X-ray of a shoulder) with patient details. This is a radiology report.\n2.  **Identify tables/structured data:** There is no distinct table structure visible in the image. The text is mostly annotations and clinical information.\n3.  **Extract metadata:**\n    *   `report_date`: Not explicitly visible, will use `null`.\n    *   `lab_name`: Not explicitly visible, will use `null`.\n    *   `patient_id`: Not explicitly visible, will use `null`.\n    *   `doctor_name`: Not explicitly visible, will use `null`.\n    *   `sample_type`: Not explicitly visible, will use `null`.\n    *   `collection_time`: Not explicitly visible, will use `null`.\n4.  **Format the output:** Create a JSON object with `page_type`, `tables` (empty list as no tables are found), and `metadata`.<unused95>```json\n{\n    \"page_type\": \"radiology_report\",\n    \"tables\": [],\n   ...",
-    "response_length": 1199,
-    "duration_seconds": 16.861,
+    "response": "<unused94>thought\nThe user wants to extract structured data from a radiology report image.\n\n1.  **Identify Page Type:** The image is a radiology report.\n2.  **Identify Tables/Structured Sections:**\n    *   There is a table showing patient details, clinical info, and imaging details.\n    *   There is a table showing the interpretations of the radiologist.\n3.  **Extract Data for Patient/Clinical Details Table:**\n    *   \"Patient details\" -> \"Patient Name\": \"AYUSH KUMAR\"\n    *   \"Patient Age\": \"19 years\"\n    *   \"Patient Gender\": \"Male\"\n    *   \"Referring Physician\": \"DR. RAMKANT KUMAR\"\n    *   \"Clinical Summary\": \"RIGHT SHOULDER ACROMIOCLAVICULAR JOINT PAIN\"\n    *   \"Acquisition Details\": \"TECHNIQUE: X-RAY\"\n    *   \"DATE/TIME\": \"11/06/2024 12:24:01\"\n    *   \"LOCATION\": \"DISTRICT CENTER\"\n    *   \"PORTABLE/STATIONARY\": \"PORTABLE\"\n    *   \"Body Part\": \"RIGHT SHOULDER\"\n    *   \"Accession Number\": \"1111111111111111111\"\n    *   \"Report Number\": \"1111111111111111111\"\n    *   \"DIAGNOSIS\": \"RIGHT...",
+    "response_length": 6619,
+    "duration_seconds": 42.48,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:24:35.420677",
-    "function": "is_full_page_medical_image",
-    "prompt": "You are analyzing a scanned PDF page. Your task is to determine if this page is PRIMARILY a medical imaging scan (like an X-ray, CT scan, MRI, or ultrasound image).\n\nIMPORTANT: Look at the ENTIRE page carefully.\n\nAnswer 'YES' ONLY if:\n- More than 90% of the page shows a greyscale medical scan (bones, organs, etc.)\n- There is minimal text (just patient name/labels at corners/edges)\n- The scan itself fills most of the page\n- Examples: Full-page chest X-ray, brain MRI scan, CT slice\n\nAnswer 'NO' if...",
-    "prompt_length": 1163,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_1.png"
-    ],
-    "num_images": 1,
-    "response": "ANALYSIS: The image shows a grey scale X-ray of a shoulder.\nANSWER: YES",
-    "response_length": 71,
-    "duration_seconds": 11.799,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:24:50.966489",
-    "function": "describe_medical_image",
-    "prompt": "You are explaining this medical image to a patient.\n\nCONTEXT FROM MEDICAL REPORT:\nFINDINGS SUMMARY:\n\n**Report Type:** CT SCAN, Shoulder AP (X-ray)\n**Patient Name:** AYUSH KUMAR\n**Age:** 19 years\n**Gender:** Male\n\n**Condition/Issue:**\nThis report is a shoulder X-ray (AP view) taken on [Date]. It was performed to assess the patient's shoulder joint.\n**Tests/Procedures Done:**\nA shoulder AP X-ray was performed.\n**Findings:**\nThe X-ray shows a slight fracture in the shoulder (clavicle). The fracture...",
-    "prompt_length": 9470,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_1.png"
-    ],
-    "num_images": 1,
-    "response": "I am sorry, but I cannot provide the requested caption and description. The image is a medical X-ray and I am programmed to avoid providing medical interpretations or diagnoses. Sharing such information without proper medical context or credentials could be harmful.\n\nIf you have questions about the image or the patient's condition, please consult a qualified medical professional. They can provide accurate information based on the complete medical record and examination.",
-    "response_length": 474,
-    "duration_seconds": 14.416,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:24:57.547112",
-    "function": "is_report_page",
-    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a structured report:\n- Full-page me...",
-    "prompt_length": 943,
+    "timestamp": "2026-01-26T01:24:07.376797",
+    "function": "classify_and_extract_text",
+    "prompt": "Analyze this PDF page and provide THREE things:\n\n1. IS_FULL_PAGE_SCAN: Is MORE than 90% of this page a medical scan (X-ray, CT, MRI, ultrasound)?\n   - Answer YES if the scan fills most of the page with minimal text (just labels at edges)\n   - Answer NO if it's a text document, lab report, form, bill, or has significant text content\n\n2. HAS_EMBEDDED_SCANS: Does this page contain any embedded medical imaging scans mixed with text?\n   - Answer YES if there are any X-rays, CT scans, MRI images visib...",
+    "prompt_length": 1037,
     "image_paths": [
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_2.png"
     ],
     "num_images": 1,
-    "response": "IS_REPORT: YES\nREPORT_TYPE: radiology_report\nCONFIDENCE: high\nREASON: The document contains a radiology report titled \"LEFT SHOULDER AP\" with findings about a fracture.\n",
-    "response_length": 169,
-    "duration_seconds": 6.58,
+    "response": "IS_FULL_PAGE_SCAN: NO\nHAS_EMBEDDED_SCANS: NO\nEXTRACTED_TEXT:\nSEEMA DIAGNOSTIC CENTER\nMOST ADVANCED 96 Slice CT Scanner\nADVANCED DENTAL IMAGING CBCT & OPG\n\nPatient Name : AYUSH KUMAR\nAge/Sex : 19 Yrs/M\nRef. by : Dr. Ramakanth Kumar Ms, ORTHO, DNB, MNAMS.\nDate: 08.05.2024\n\nLEFT SHOULDER AP\n\nCheck x-ray\nFracture shaft of left clavicle with nailing and plate seen in situ.\nRest of the visualized bones are normal.\n\nDr. Manoj Kumar\nMD (Radio-Diagnosis)\nConsultant Radiologist\nPGI Chandigarh\n\nFacilities Available : CT SCAN, ULTRASOUND, COLOUR DOPPLER, X-RAY, ECHO, PATH LAB\n\n+ 91 827 1206 673\n+ 91 620 6083 608\n\nAG, Complex, Near Panchmukhi Mandir, Beside Beta Showroom St. John's High School,\nEast Boring Canal Road, Patna - 800 001\nEmail: simadagnostic32@gmail.com, www.simadagnosticcenter.com\n\n",
+    "response_length": 794,
+    "duration_seconds": 7.527,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:25:26.331796",
+    "timestamp": "2026-01-26T01:24:09.700224",
+    "function": "is_report_page",
+    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- medical bills/money receipts\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a st...",
+    "prompt_length": 919,
+    "image_paths": [
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_2.png"
+    ],
+    "num_images": 1,
+    "response": "IS_REPORT: YES\nREPORT_TYPE: other_report\nCONFIDENCE: high\nREASON: The document contains a medical report describing findings from an X-ray examination, specifically related to a left shoulder fracture, despite not fitting neatly into a standard structured report category like a lab report or radiology report.\n",
+    "response_length": 311,
+    "duration_seconds": 2.314,
+    "success": true,
+    "error": null,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-26T01:24:14.853776",
     "function": "extract_report_tabular_data",
-    "prompt": "You are a specialized medical report data extractor. This page is a radiology_report.\n\nExtract ALL tabular/structured data from this page into a standardized format.\n\nCRITICAL RULES:\n1. Extract EVERY table, list, or structured section you can find\n2. Preserve the exact values, units, and reference ranges\n3. For each table, define the column headers and then list each row\n4. Mark abnormal values with status \"High\", \"Low\", or \"Abnormal\" if indicated\n5. If a field is not present, use null\n\nRespond ...",
-    "prompt_length": 1652,
+    "prompt": "You are a specialized medical report data extractor. This page is a other_report.\n\nExtract ALL tabular/structured data from this page into a standardized format.\n\nCRITICAL RULES:\n1. Extract EVERY table, list, or structured section you can find\n2. Preserve the exact values, units, and reference ranges\n3. For each table, define the column headers and then list each row\n4. Mark abnormal values with status \"High\", \"Low\", or \"Abnormal\" if indicated\n5. If a field is not present, use null\n\nRespond with...",
+    "prompt_length": 1644,
     "image_paths": [
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_2.png"
     ],
     "num_images": 1,
-    "response": "<unused94>thought\nThe user wants to extract tabular/structured data from a radiology report image.\n\n1.  **Identify the page type:** The image is clearly a radiology report.\n2.  **Scan for tables/structured sections:**\n    *   There is a section titled \"LEFT SHOULDER AP\". This contains a description of the finding.\n    *   There is a section titled \"Check x-ray\". This contains the specific finding.\n    *   There is a list of facilities available at the bottom. This could be considered a table, but it's not a standard clinical table. The user wants ALL tables, so I should probably include it, but it's not in the typical \"Lab Report\" or \"Prescription\" format. Let's consider the \"Finding\" section as the primary table/structured data.\n3.  **Extract data from the \"LEFT SHOULDER AP\" section:**\n    *   This section describes a specific finding. It's not a structured table with columns like \"Finding\", \"Location\", \"Description\". It's more like a single descriptive sentence.\n    *   The text is: ...",
-    "response_length": 4340,
-    "duration_seconds": 28.784,
+    "response": "```json\n{\n  \"page_type\": \"other_report\",\n  \"tables\": [\n    {\n      \"table_name\": \"Radiology Report Findings\",\n      \"columns\": [\n        \"Finding\",\n        \"Location\",\n        \"Description\"\n      ],\n      \"rows\": [\n        [\n          \"Fracture shaft of left clavicle with nailing and plate seen in situ.\",\n          \"Left clavicle\",\n          \"Fracture shaft of left clavicle with nailing and plate seen in situ.\"\n        ]\n      ]\n    }\n  ],\n  \"metadata\": {\n    \"report_date\": \"08.05.2024\",\n    \"lab_name\": null,\n    \"patient_id\": null,\n    \"doctor_name\": \"Dr. Manoj Kumar\",\n    \"sample_type\": null,\n    \"collection_time\": null\n  }\n}\n```",
+    "response_length": 639,
+    "duration_seconds": 5.154,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:25:35.266203",
-    "function": "is_full_page_medical_image",
-    "prompt": "You are analyzing a scanned PDF page. Your task is to determine if this page is PRIMARILY a medical imaging scan (like an X-ray, CT scan, MRI, or ultrasound image).\n\nIMPORTANT: Look at the ENTIRE page carefully.\n\nAnswer 'YES' ONLY if:\n- More than 90% of the page shows a greyscale medical scan (bones, organs, etc.)\n- There is minimal text (just patient name/labels at corners/edges)\n- The scan itself fills most of the page\n- Examples: Full-page chest X-ray, brain MRI scan, CT slice\n\nAnswer 'NO' if...",
-    "prompt_length": 1163,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_2.png"
-    ],
-    "num_images": 1,
-    "response": "<unused94>thought\nThe user wants me to analyze an image and determine if it's primarily a medical scan.\n\n1.  **What do I see?** The image contains the logo of \"SEEMA DIAGNOSTIC CENTER\", patient details (Ayuśh Kumar, 19 yrs/M), referring doctor, date, and a section titled \"LEFT SHOULDER AP\". Below this title, there is text describing a \"Check x-ray\" and details about a fracture in the left clavicle. The rest of the page shows contact information, facilities offered, and doctor's details. There is a prominent white area with black text at the bottom.\n2.  **Is it primarily a scan image or primarily text/forms?** The majority of the page is occupied by the \"LEFT SHOULDER AP\" text and the medical report detailing the x-ray findings. While there are logos and contact details, the core content describing the medical condition and the scan itself dominates the page. The text block describing the x-ray is very significant.\n3.  **Final answer:** YES.<unused95>ANALYSIS: The page contains a medica...",
-    "response_length": 1085,
-    "duration_seconds": 8.933,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:25:42.962510",
-    "function": "describe_medical_image",
-    "prompt": "You are explaining this medical image to a patient.\n\nCONTEXT FROM MEDICAL REPORT:\nFINDINGS SUMMARY:\n\n**Report Type:** CT SCAN, Shoulder AP (X-ray)\n**Patient Name:** AYUSH KUMAR\n**Age:** 19 years\n**Gender:** Male\n\n**Condition/Issue:**\nThis report is a shoulder X-ray (AP view) taken on [Date]. It was performed to assess the patient's shoulder joint.\n**Tests/Procedures Done:**\nA shoulder AP X-ray was performed.\n**Findings:**\nThe X-ray shows a slight fracture in the shoulder (clavicle). The fracture...",
-    "prompt_length": 9470,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_2.png"
-    ],
-    "num_images": 1,
-    "response": "**CAPTION:** Left shoulder X-ray shows clavicle fracture.\n\n**DESCRIPTION:** This is a left shoulder X-ray image. It shows a fracture in the collarbone (clavicle), specifically on the left side. There is also evidence of a nail and plate fixation seen in the image. The rest of the visualized bones appear normal.",
-    "response_length": 312,
-    "duration_seconds": 7.252,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:25:52.553065",
-    "function": "is_report_page",
-    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a structured report:\n- Full-page me...",
-    "prompt_length": 943,
+    "timestamp": "2026-01-26T01:24:31.605407",
+    "function": "classify_and_extract_text",
+    "prompt": "Analyze this PDF page and provide THREE things:\n\n1. IS_FULL_PAGE_SCAN: Is MORE than 90% of this page a medical scan (X-ray, CT, MRI, ultrasound)?\n   - Answer YES if the scan fills most of the page with minimal text (just labels at edges)\n   - Answer NO if it's a text document, lab report, form, bill, or has significant text content\n\n2. HAS_EMBEDDED_SCANS: Does this page contain any embedded medical imaging scans mixed with text?\n   - Answer YES if there are any X-rays, CT scans, MRI images visib...",
+    "prompt_length": 1037,
     "image_paths": [
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_3.png"
     ],
     "num_images": 1,
-    "response": "IS_REPORT: NO\nREPORT_TYPE: not_applicable\nCONFIDENCE: low\nREASON: The document appears to be a clinic cover page or an advertisement, not a medical report with structured data. It contains clinic information, doctor's details, appointment timings, and a disclaimer. There are no lab results, prescriptions, or structured summaries.<unused95>IS_REPORT: NO\nREPORT_TYPE: not_applicable\nCONFIDENCE: low\nREASON: The document is a clinic cover page containing information like doctor's name, clinic name, contact details, appointment timings, and a disclaimer. It does not present medical results in a structured format like lab tests, prescriptions, or radiology reports.",
-    "response_length": 666,
-    "duration_seconds": 9.59,
+    "response": "FAILED_TO_ANSWER_PROMPT\nThe page is a clinic brochure/website, not a medical scan. Therefore, the correct classification is 'NO' for IS_FULL_PAGE_SCAN and 'NO' for HAS_EMBEDDED_SCANS. The extracted text involves clinic information, doctor's details, contact information, operating hours, and potentially some patient information from a previous visit (though the patient details are redacted).\n\nIS_FULL_PAGE_SCAN: NO\nHAS_EMBEDDED_SCANS: NO\nEXTRACTED_TEXT:\nReg. No.: BMC/4215 (DMC) 58695\nAdvanced Bone & Joint Clinic\nศูนย์ हड्डी जोड़ एवं जॉइंट रिप्लेसमेंट चिकित्सा केंद्र - गुडन्यूज\n(स्थित बो के बाजार में) पटना - 1\n7070312214 | 8540021999, 06123196091 | dr.ramakantkumar@gmail.com\nOPD TIMING\nMonday to Saturday\nMorning : 09AM to 11AM | Evening : 04 Pm to 09Pm\nSunday : 10 Am to 02 PM\nwww.dramakantkumar.com\nDr. Ramakant Kumar\nConsultant Orthopaedics and Joint Replacement Surgeon\nMBBS (Gold Medalist), MS Orthopaedics (AIIMS, New Delhi)\nDRNB Orthopaedics & Trauma\nMNAMS\nFellow, Hip & Knee Reconstructi...",
+    "response_length": 2752,
+    "duration_seconds": 16.749,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:25:59.491188",
-    "function": "is_full_page_medical_image",
-    "prompt": "You are analyzing a scanned PDF page. Your task is to determine if this page is PRIMARILY a medical imaging scan (like an X-ray, CT scan, MRI, or ultrasound image).\n\nIMPORTANT: Look at the ENTIRE page carefully.\n\nAnswer 'YES' ONLY if:\n- More than 90% of the page shows a greyscale medical scan (bones, organs, etc.)\n- There is minimal text (just patient name/labels at corners/edges)\n- The scan itself fills most of the page\n- Examples: Full-page chest X-ray, brain MRI scan, CT slice\n\nAnswer 'NO' if...",
-    "prompt_length": 1163,
+    "timestamp": "2026-01-26T01:24:34.274466",
+    "function": "is_report_page",
+    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- medical bills/money receipts\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a st...",
+    "prompt_length": 919,
     "image_paths": [
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_3.png"
     ],
     "num_images": 1,
-    "response": " analýsis: The page contains a medical clinic's contact information, doctor's details, a schedule, and a diagnosis section with medication details. There is no prominent medical scan image.\nANSWER: NO",
-    "response_length": 200,
-    "duration_seconds": 6.936,
+    "response": "IS_REPORT: YES\nREPORT_TYPE: other_report\nCONFIDENCE: high\nREASON: The document contains a patient's name, doctor's details, diagnosis, and patient information, which are typical components of a medical report, but it does not contain structured data like lab results, prescriptions, or radiology images. It is a general medical summary/fact sheet.\n",
+    "response_length": 348,
+    "duration_seconds": 2.668,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:26:08.794027",
-    "function": "has_embedded_medical_images",
-    "prompt": "Analyze this medical report page. Does this page contain any embedded medical imaging scans \n(such as X-rays, CT scans, MRI images, ultrasound images, or other diagnostic images) \nmixed with text or within a report format?\n\nAnswer with ONLY 'YES' or 'NO'.\n- Answer 'YES' if there are any visible medical scans/images embedded in the document.\n- Answer 'NO' if the page only contains text, tables, or forms without any medical imaging.",
-    "prompt_length": 434,
+    "timestamp": "2026-01-26T01:24:42.936426",
+    "function": "extract_report_tabular_data",
+    "prompt": "You are a specialized medical report data extractor. This page is a other_report.\n\nExtract ALL tabular/structured data from this page into a standardized format.\n\nCRITICAL RULES:\n1. Extract EVERY table, list, or structured section you can find\n2. Preserve the exact values, units, and reference ranges\n3. For each table, define the column headers and then list each row\n4. Mark abnormal values with status \"High\", \"Low\", or \"Abnormal\" if indicated\n5. If a field is not present, use null\n\nRespond with...",
+    "prompt_length": 1644,
     "image_paths": [
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_3.png"
     ],
     "num_images": 1,
-    "response": "NO\n",
-    "response_length": 3,
-    "duration_seconds": 9.302,
+    "response": "```json\n{\n  \"page_type\": \"other_report\",\n  \"tables\": [\n    {\n      \"table_name\": \"Patient Demographics\",\n      \"columns\": [\n        \"Patient Name\",\n        \"Age\",\n        \"Gender\"\n      ],\n      \"rows\": [\n        [\n          \"Ajoy Kushar\",\n          \"19\",\n          \"Male\"\n        ]\n      ]\n    },\n    {\n      \"table_name\": \"Diagnosis\",\n      \"columns\": [\n        \"Condition\",\n        \"Description\"\n      ],\n      \"rows\": [\n        [\n          \"Displaced Fracture Shaft of clavicle Left\",\n          \"Date of surgery: 29/03/2024\"\n        ]\n      ]\n    },\n    {\n      \"table_name\": \"Medication/Treatment\",\n      \"columns\": [\n        \"Medicine\",\n        \"Dosage\",\n        \"Freq. - Duration\"\n      ],\n      \"rows\": [\n        [\n          \"Tablet Ortho Novum 40\",\n          \"1\",\n          \"Daily - Till Next Visit\"\n        ]\n      ]\n    }\n  ],\n  \"metadata\": {\n    \"report_date\": \"14-May-2024 06:14 PM\",\n    \"lab_name\": \"ADVANCED BONE & JOINT CLINIC\",\n    \"patient_id\": \"ABJCOBI0001\",\n    \"doctor_name\": \"Dr...",
+    "response_length": 1081,
+    "duration_seconds": 8.66,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:26:19.493229",
+    "timestamp": "2026-01-26T01:25:24.950020",
+    "function": "classify_and_extract_text",
+    "prompt": "Analyze this PDF page and provide THREE things:\n\n1. IS_FULL_PAGE_SCAN: Is MORE than 90% of this page a medical scan (X-ray, CT, MRI, ultrasound)?\n   - Answer YES if the scan fills most of the page with minimal text (just labels at edges)\n   - Answer NO if it's a text document, lab report, form, bill, or has significant text content\n\n2. HAS_EMBEDDED_SCANS: Does this page contain any embedded medical imaging scans mixed with text?\n   - Answer YES if there are any X-rays, CT scans, MRI images visib...",
+    "prompt_length": 1037,
+    "image_paths": [
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_4.png"
+    ],
+    "num_images": 1,
+    "response": "IS_FULL_PAGE_SCAN: NO\nHAS_EMBEDDED_SCANS: NO\nEXTRACTED_TEXT:\n1. Goods sold will not be returnable.\n2. All payment will be charged on 5% at the time not mentioned in Payment Terms and Conditions.\n3. Goods sold will not be returnable.\n4. All payment will be charged on 5% at the time not mentioned in Payment Terms and Conditions.\n5. Goods sold will not be returnable.\n6. All payment will be charged on 5% at the time not mentioned in Payment Terms and Conditions.\n7. Goods sold will not be returnable.\n8. All payment will be charged on 5% at the time not mentioned in Payment Terms and Conditions.\n9. Goods sold will not be returnable.\n10. All payment will be charged on 5% at the time not mentioned in Payment Terms and Conditions.\n11. Goods sold will not be returnable.\n12. All payment will be charged on 5% at the time not mentioned in Payment Terms and Conditions.\n13. Goods sold will not be returnable.\n14. All payment will be charged on 5% at the time not mentioned in Payment Terms and Conditio...",
+    "response_length": 7680,
+    "duration_seconds": 42.014,
+    "success": true,
+    "error": null,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-26T01:25:27.916453",
     "function": "is_report_page",
-    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a structured report:\n- Full-page me...",
-    "prompt_length": 943,
+    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- medical bills/money receipts\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a st...",
+    "prompt_length": 919,
     "image_paths": [
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_4.png"
     ],
     "num_images": 1,
-    "response": "CONFIDENCE: medium\nREASON: The document contains tabular data but it is an invoice from an enterprise, not a medical report.\n\nIS_REPORT: NO\nREPORT_TYPE: other_report\n",
-    "response_length": 166,
-    "duration_seconds": 10.698,
+    "response": "IS_REPORT: NO\nREPORT_TYPE: other_report\nCONFIDENCE: low\nREASON: The document is an invoice or bill, not a structured medical report containing lab results, prescriptions, radiology reports, discharge summaries, or vital signs. It has a bill number, patient information, invoice date, and payment details, but lacks a medical context beyond identifying a party (NAM ENTERPRISES) and a specific medical facility (ADVANCE NEURO HOSPITAL).",
+    "response_length": 435,
+    "duration_seconds": 2.966,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:26:28.601531",
-    "function": "is_full_page_medical_image",
-    "prompt": "You are analyzing a scanned PDF page. Your task is to determine if this page is PRIMARILY a medical imaging scan (like an X-ray, CT scan, MRI, or ultrasound image).\n\nIMPORTANT: Look at the ENTIRE page carefully.\n\nAnswer 'YES' ONLY if:\n- More than 90% of the page shows a greyscale medical scan (bones, organs, etc.)\n- There is minimal text (just patient name/labels at corners/edges)\n- The scan itself fills most of the page\n- Examples: Full-page chest X-ray, brain MRI scan, CT slice\n\nAnswer 'NO' if...",
-    "prompt_length": 1163,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_4.png"
-    ],
-    "num_images": 1,
-    "response": "ANALYSIS: The page contains a table with itemized billing details, quantities, prices, and totals, along with patient and address information. There are no large-scale medical scan images visible.\nANSWER: NO",
-    "response_length": 207,
-    "duration_seconds": 9.107,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:26:37.298254",
-    "function": "has_embedded_medical_images",
-    "prompt": "Analyze this medical report page. Does this page contain any embedded medical imaging scans \n(such as X-rays, CT scans, MRI images, ultrasound images, or other diagnostic images) \nmixed with text or within a report format?\n\nAnswer with ONLY 'YES' or 'NO'.\n- Answer 'YES' if there are any visible medical scans/images embedded in the document.\n- Answer 'NO' if the page only contains text, tables, or forms without any medical imaging.",
-    "prompt_length": 434,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_4.png"
-    ],
-    "num_images": 1,
-    "response": "NO",
-    "response_length": 2,
-    "duration_seconds": 8.696,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:26:45.339547",
-    "function": "is_report_page",
-    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a structured report:\n- Full-page me...",
-    "prompt_length": 943,
+    "timestamp": "2026-01-26T01:26:09.851727",
+    "function": "classify_and_extract_text",
+    "prompt": "Analyze this PDF page and provide THREE things:\n\n1. IS_FULL_PAGE_SCAN: Is MORE than 90% of this page a medical scan (X-ray, CT, MRI, ultrasound)?\n   - Answer YES if the scan fills most of the page with minimal text (just labels at edges)\n   - Answer NO if it's a text document, lab report, form, bill, or has significant text content\n\n2. HAS_EMBEDDED_SCANS: Does this page contain any embedded medical imaging scans mixed with text?\n   - Answer YES if there are any X-rays, CT scans, MRI images visib...",
+    "prompt_length": 1037,
     "image_paths": [
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_5.png"
     ],
     "num_images": 1,
-    "response": "IS_REPORT: YES\nREPORT_TYPE: other_report\nCONFIDENCE: high\nREASON: The document contains a table listing items, quantities, unit prices, discounts, and totals, which is structured data related to a medical bill or invoice.\n",
-    "response_length": 222,
-    "duration_seconds": 8.039,
+    "response": "TOKEN\n```json\n[\n  {\"box_2d\": [87, 334, 391, 413], \"text\": \"AYUSH KUMAR\"},\n  {\"box_2d\": [775, 721, 834, 758], \"text\": \"9431664181\"},\n  {\"box_2d\": [495, 432, 573, 487], \"text\": \"20 YRS./MALE\"},\n  {\"box_2d\": [530, 339, 621, 381], \"text\": \"PATIENT ID:\"},\n  {\"box_2d\": [291, 330, 373, 378], \"text\": \"Name:\"},\n  {\"box_2d\": [580, 155, 665, 215], \"text\": \"Date of Admission\"},\n  {\"box_2d\": [691, 157, 775, 217], \"text\": \"Date of Discharge\"},\n  {\"box_2d\": [208, 154, 275, 216], \"text\": \"Mob. No.\"},\n  {\"box_2d\": [237, 813, 295, 865], \"text\": \"Mitthila Colony, Nasrgunj, Dist. Patna\"},\n  {\"box_2d\": [440, 563, 521, 645], \"text\": \"Sargeon Charge + Implant\"},\n  {\"box_2d\": [242, 378, 318, 435], \"text\": \"Address\"},\n  {\"box_2d\": [409, 237, 477, 300], \"text\": \"77000\"},\n  {\"box_2d\": [817, 157, 882, 216], \"text\": \"Mobile No.\"},\n  {\"box_2d\": [120, 151, 173, 206], \"text\": \"Patient ID\"},\n  {\"box_2d\": [185, 158, 256, 215], \"text\": \"Name\"},\n  {\"box_2d\": [560, 238, 638, 309], \"text\": \"OT Charge + OT Medicine\"},\n  {\"b...",
+    "response_length": 3488,
+    "duration_seconds": 41.925,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:26:59.084796",
+    "timestamp": "2026-01-26T01:26:12.387928",
+    "function": "is_report_page",
+    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- medical bills/money receipts\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a st...",
+    "prompt_length": 919,
+    "image_paths": [
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_5.png"
+    ],
+    "num_images": 1,
+    "response": "IS_REPORT: YES\nREPORT_TYPE: other_report\nCONFIDENCE: high\nREASON: The document contains a table listing items, quantities, unit prices, and totals, which is characteristic of a medical bill or invoice. It includes patient information, billing codes, itemized charges, and financial details like total quantity, total, net payable, and discount.\n",
+    "response_length": 345,
+    "duration_seconds": 2.536,
+    "success": true,
+    "error": null,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-26T01:26:35.636109",
     "function": "extract_report_tabular_data",
     "prompt": "You are a specialized medical report data extractor. This page is a other_report.\n\nExtract ALL tabular/structured data from this page into a standardized format.\n\nCRITICAL RULES:\n1. Extract EVERY table, list, or structured section you can find\n2. Preserve the exact values, units, and reference ranges\n3. For each table, define the column headers and then list each row\n4. Mark abnormal values with status \"High\", \"Low\", or \"Abnormal\" if indicated\n5. If a field is not present, use null\n\nRespond with...",
     "prompt_length": 1644,
@@ -270,111 +238,79 @@
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_5.png"
     ],
     "num_images": 1,
-    "response": "```json\n{\n  \"page_type\": \"other_report\",\n  \"tables\": [\n    {\n      \"table_name\": \"Billing Details\",\n      \"columns\": [\n        \"Sno\",\n        \"Department\",\n        \"Items\",\n        \"Quantity\",\n        \"Unit Price\",\n        \"Dis (%)\",\n        \"Total\"\n      ],\n      \"rows\": [\n        [\n          \"1\",\n          \"Package\",\n          \"Surgeon Charge + Implant\",\n          \"1\",\n          \"77000\",\n          \"\",\n          \"77000\"\n        ],\n        [\n          \"2\",\n          \"Package\",\n          \"OT Charge + OT Medicine\",\n          \"1\",\n          \"18000\",\n          \"\",\n          \"18000\"\n        ],\n        [\n          \"3\",\n          \"Package\",\n          \"Anaesthesia (Anesthetic charge, Anesthesia machine charge)\",\n          \"1\",\n          \"5000\",\n          \"\",\n          \"5000\"\n        ],\n        [\n          \"4\",\n          \"Package\",\n          \"Hospital stay\",\n          \"1\",\n          \"10000\",\n          \"\",\n          \"110000\"\n        ]\n      ]\n    }\n  ],\n  \"metadata\": {\n    \"report_date\": \"29/03/...",
-    "response_length": 1174,
-    "duration_seconds": 13.742,
+    "response": "```json\n{\n    \"page_type\": \"other_report\",\n    \"tables\": [\n        {\n            \"table_name\": \"Billing/Invoice details\",\n            \"columns\": [\n                \"Sno\",\n                \"Department\",\n                \"Items\",\n                \"Quantity\",\n                \"Unit Price\",\n                \"Discount (%)\",\n                \"Total\"\n            ],\n            \"rows\": [\n                [\n                    \"1\",\n                    \"Package\",\n                    \"Surgeon Charge + Implant\",\n                    \"1\",\n                    \"77000\",\n                    \"\",\n                    \"77000\"\n                ],\n                [\n                    \"2\",\n                    \"Package\",\n                    \"OT Charge + OT Medicine\",\n                    \"1\",\n                    \"18000\",\n                    \"\",\n                    \"18000\"\n                ],\n                [\n                    \"3\",\n                    \"Package\",\n                    \"Anaesthesia (Anesthetic Charge, anes...",
+    "response_length": 5126,
+    "duration_seconds": 23.246,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:27:04.491220",
-    "function": "is_full_page_medical_image",
-    "prompt": "You are analyzing a scanned PDF page. Your task is to determine if this page is PRIMARILY a medical imaging scan (like an X-ray, CT scan, MRI, or ultrasound image).\n\nIMPORTANT: Look at the ENTIRE page carefully.\n\nAnswer 'YES' ONLY if:\n- More than 90% of the page shows a greyscale medical scan (bones, organs, etc.)\n- There is minimal text (just patient name/labels at corners/edges)\n- The scan itself fills most of the page\n- Examples: Full-page chest X-ray, brain MRI scan, CT slice\n\nAnswer 'NO' if...",
-    "prompt_length": 1163,
+    "timestamp": "2026-01-26T01:26:39.961117",
+    "function": "classify_and_extract_text",
+    "prompt": "Analyze this PDF page and provide THREE things:\n\n1. IS_FULL_PAGE_SCAN: Is MORE than 90% of this page a medical scan (X-ray, CT, MRI, ultrasound)?\n   - Answer YES if the scan fills most of the page with minimal text (just labels at edges)\n   - Answer NO if it's a text document, lab report, form, bill, or has significant text content\n\n2. HAS_EMBEDDED_SCANS: Does this page contain any embedded medical imaging scans mixed with text?\n   - Answer YES if there are any X-rays, CT scans, MRI images visib...",
+    "prompt_length": 1037,
     "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_5.png"
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_6.png"
     ],
     "num_images": 1,
-    "response": "ANALYSIS: The page contains a table with billing information, patient details, and hospital contact details.\nANSWER: NO",
-    "response_length": 119,
-    "duration_seconds": 5.405,
+    "response": "IS_FULL_PAGE_SCAN: NO\nHAS_EMBEDDED_SCANS: NO\nEXTRACTED_TEXT:\nMoney Receipt\nPh. : 0612-2522361\nADVANCED NEURO-DIAGNOSTIC CENTRE\n46, Kavi Raman Path, Nageshwar Colony\nNo. 1834 Boring Road, Patna -800 001\nDate 30/3/24\nReceived with thanks from Mr./Mrs. / Miss\nAyuśh Kumar\nDr. Ramakant Kumar\nOperation charge\nAdvance...............\nReg. Fee...............\nTOTAL 100000/-\nRupees in words One lakh rupees\nThanks !\nSignature\n\n```",
+    "response_length": 422,
+    "duration_seconds": 4.317,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:27:10.817368",
-    "function": "has_embedded_medical_images",
-    "prompt": "Analyze this medical report page. Does this page contain any embedded medical imaging scans \n(such as X-rays, CT scans, MRI images, ultrasound images, or other diagnostic images) \nmixed with text or within a report format?\n\nAnswer with ONLY 'YES' or 'NO'.\n- Answer 'YES' if there are any visible medical scans/images embedded in the document.\n- Answer 'NO' if the page only contains text, tables, or forms without any medical imaging.",
-    "prompt_length": 434,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_5.png"
-    ],
-    "num_images": 1,
-    "response": "NO\n",
-    "response_length": 3,
-    "duration_seconds": 6.325,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:27:21.259847",
+    "timestamp": "2026-01-26T01:26:42.376004",
     "function": "is_report_page",
-    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a structured report:\n- Full-page me...",
-    "prompt_length": 943,
+    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- medical bills/money receipts\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a st...",
+    "prompt_length": 919,
     "image_paths": [
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_6.png"
     ],
     "num_images": 1,
-    "response": "IS_REPORT: NO\nREPORT_TYPE: other_report\nCONFIDENCE: low\nREASON: This document appears to be a money receipt or invoice, not a structured medical report. It contains details like the recipient's name, doctor's name, charge type (Operation charge), amount, and total amount, but lacks the typical structure of a medical report like lab results or a discharge summary.\n",
-    "response_length": 366,
-    "duration_seconds": 10.439,
+    "response": "IS_REPORT: NO\nREPORT_TYPE: other_report\nCONFIDENCE: low\nREASON: The document is a Money Receipt, a payment document, not a structured medical report containing tabular data or specific medical information like test results or prescriptions.",
+    "response_length": 240,
+    "duration_seconds": 2.412,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:27:29.816941",
-    "function": "is_full_page_medical_image",
-    "prompt": "You are analyzing a scanned PDF page. Your task is to determine if this page is PRIMARILY a medical imaging scan (like an X-ray, CT scan, MRI, or ultrasound image).\n\nIMPORTANT: Look at the ENTIRE page carefully.\n\nAnswer 'YES' ONLY if:\n- More than 90% of the page shows a greyscale medical scan (bones, organs, etc.)\n- There is minimal text (just patient name/labels at corners/edges)\n- The scan itself fills most of the page\n- Examples: Full-page chest X-ray, brain MRI scan, CT slice\n\nAnswer 'NO' if...",
-    "prompt_length": 1163,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_6.png"
-    ],
-    "num_images": 1,
-    "response": "ANALYSIS: The page contains a money receipt with text, signatures, and a small stamp, but no medical scan image.\nANSWER: NO",
-    "response_length": 123,
-    "duration_seconds": 8.555,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:27:39.099098",
-    "function": "has_embedded_medical_images",
-    "prompt": "Analyze this medical report page. Does this page contain any embedded medical imaging scans \n(such as X-rays, CT scans, MRI images, ultrasound images, or other diagnostic images) \nmixed with text or within a report format?\n\nAnswer with ONLY 'YES' or 'NO'.\n- Answer 'YES' if there are any visible medical scans/images embedded in the document.\n- Answer 'NO' if the page only contains text, tables, or forms without any medical imaging.",
-    "prompt_length": 434,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_6.png"
-    ],
-    "num_images": 1,
-    "response": "IMO is a type of medical image. Is it visible in the report? No.\n",
-    "response_length": 65,
-    "duration_seconds": 9.281,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:27:44.611039",
-    "function": "is_report_page",
-    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a structured report:\n- Full-page me...",
-    "prompt_length": 943,
+    "timestamp": "2026-01-26T01:26:54.806098",
+    "function": "classify_and_extract_text",
+    "prompt": "Analyze this PDF page and provide THREE things:\n\n1. IS_FULL_PAGE_SCAN: Is MORE than 90% of this page a medical scan (X-ray, CT, MRI, ultrasound)?\n   - Answer YES if the scan fills most of the page with minimal text (just labels at edges)\n   - Answer NO if it's a text document, lab report, form, bill, or has significant text content\n\n2. HAS_EMBEDDED_SCANS: Does this page contain any embedded medical imaging scans mixed with text?\n   - Answer YES if there are any X-rays, CT scans, MRI images visib...",
+    "prompt_length": 1037,
     "image_paths": [
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
     ],
     "num_images": 1,
-    "response": "FINDINGS:\n- The document contains a table with lab test results, including test names, results, reference ranges, and units. This aligns with the definition of a structured report containing tabular data.\n- The report includes sections like \"Hematology - Complete Blood Count (CBC)\" and \"Metabolic & Chemistry\" which are common sections in lab reports.\n- The clinical notes section provides interpretation and recommendations, which is also typical of a structured medical report.\n\nCONCLUSION:\nThe document is a structured report containing lab test results in a tabular format.\n\nIS_REPORT: YES\nREPORT_TYPE: lab_report\nCONFIDENCE: high\nREASON: The document is a lab report containing structured tabular data of lab test results, including test names, values, reference ranges, and units.\n\n",
-    "response_length": 789,
-    "duration_seconds": 5.51,
+    "response": "IS_FULL_PAGE_SCAN: NO\nHAS_EMBEDDED_SCANS: NO\nEXTRACTED_TEXT:\nNeoGen Diagnostics Laboratory\n123 Medical Center Dr, Tech City, 90210\nPATIENT REPORT: COMPREHENSIVE METABOLIC PANEL\nPatient Name: Ayush\nPatient ID: AS-99402\nDOB: 1985-05-12 (40Y)\nGender: Male\nDate of Collection: 2023-01-20\nDate of Report: 2023-01-24\nOrdering Physician: Dr. Vance\n\nHematology - Complete Blood Count (CBC)\nTest Name       Result     Reference Range    Units\n-----------------------------------------------------------------------------------------------------\nWhite Blood Cell (WBC)  8.4      4.5 - 11.0       x10^6/µL\nRed Blood Cell (RBC)   4.92     4.50 - 5.90       x10^6/µL\nHemoglobin (Hgb)     14.1      13.5 - 17.5       g/dL\nHematocrit (Hct)    42.5      41.0 - 50.0       %\n-----------------------------------------------------------------------------------------------------\nMetabolic & Chemistry\nTest Name       Result     Reference Range    Units\n------------------------------------------------------------------...",
+    "response_length": 2048,
+    "duration_seconds": 12.429,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:28:01.467081",
+    "timestamp": "2026-01-26T01:26:56.833963",
+    "function": "is_report_page",
+    "prompt": "Analyze this medical document page and determine if it is a STRUCTURED REPORT containing tabular data.\n\nA STRUCTURED REPORT includes:\n- Lab test results with values in tables or lists\n- medical bills/money receipts\n- Blood work / pathology reports with test names and numerical values\n- Prescription lists with medications, dosages\n- Discharge summaries with structured sections\n- Radiology/imaging reports with findings in structured format\n- Vital signs or monitoring data in tabular form\n\nNOT a st...",
+    "prompt_length": 919,
+    "image_paths": [
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
+    ],
+    "num_images": 1,
+    "response": "IS_REPORT: YES\nREPORT_TYPE: lab_report\nCONFIDENCE: high\nREASON: The document contains a table of lab test results (Glucose, Creatinine, Sodium, Potassium, ALT, AST) with corresponding values, reference ranges, and units.\n",
+    "response_length": 221,
+    "duration_seconds": 2.028,
+    "success": true,
+    "error": null,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-26T01:27:27.725940",
     "function": "extract_report_tabular_data",
     "prompt": "You are a specialized medical report data extractor. This page is a lab_report.\n\nExtract ALL tabular/structured data from this page into a standardized format.\n\nCRITICAL RULES:\n1. Extract EVERY table, list, or structured section you can find\n2. Preserve the exact values, units, and reference ranges\n3. For each table, define the column headers and then list each row\n4. Mark abnormal values with status \"High\", \"Low\", or \"Abnormal\" if indicated\n5. If a field is not present, use null\n\nRespond with O...",
     "prompt_length": 1640,
@@ -382,121 +318,59 @@
       "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
     ],
     "num_images": 1,
-    "response": "```json\n{\n    \"page_type\": \"lab_report\",\n    \"tables\": [\n        {\n            \"table_name\": \"Hematology - Complete Blood Count (CBC)\",\n            \"columns\": [\n                \"Test Name\",\n                \"Result\",\n                \"Reference Range\",\n                \"Units\"\n            ],\n            \"rows\": [\n                [\n                    \"White Blood Cell (WBC)\",\n                    \"8.4\",\n                    \"4.5 - 11.0\",\n                    \"x 10^3/\\u00b5L\"\n                ],\n                [\n                    \"Red Blood Cell (RBC)\",\n                    \"4.92\",\n                    \"4.50 - 5.90\",\n                    \"x 10^6/\\u00b5L\"\n                ],\n                [\n                    \"Hemoglobin (Hgb)\",\n                    \"14.1\",\n                    \"13.5 - 17.5\",\n                    \"g/dL\"\n                ],\n                [\n                    \"Hematocrit (Hct)\",\n                    \"42.5\",\n                    \"41.0 - 50.0\",\n                    \"%\"\n              ...",
-    "response_length": 2703,
-    "duration_seconds": 16.854,
+    "response": "<unused94>thought\nThe user wants me to extract tabular data from a medical lab report image into a JSON format.\n\n1.  **Identify the report type**: The page contains a \"Comprehensive Metabolic Panel\" and a \"Complete Blood Count (CBC)\", which are lab results. So, the `page_type` is \"lab_report\".\n2.  **Extract Metadata**:\n    *   Patient Name: Ayush\n    *   Patient ID: AS-99402\n    *   DOB: 1985-05-12 (40Y)\n    *   Gender: Male\n    *   Date of Collection: 2023-01-20\n    *   Date of Report: 2023-01-24\n    *   Ordering Physician: Dr. E. Vance\n3.  **Identify Tables/Sections**: Scan the page for tables or structured lists of data.\n    *   **Hemoglobin - Complete Blood Count (CBC)** section. This looks like a table.\n    *   **Metabolic & Chemistry** section. This also looks like a table.\n4.  **Process Table 1: Hematology - Complete Blood Count (CBC)**\n    *   **Table Name**: \"Hematology - Complete Blood Count (CBC)\"\n    *   **Columns**: Extract the headers: \"Test Name\", \"Result\", \"Reference Ra...",
+    "response_length": 5575,
+    "duration_seconds": 30.89,
     "success": true,
     "error": null,
     "metadata": {}
   },
   {
-    "timestamp": "2026-01-25T01:28:04.809153",
-    "function": "is_full_page_medical_image",
-    "prompt": "You are analyzing a scanned PDF page. Your task is to determine if this page is PRIMARILY a medical imaging scan (like an X-ray, CT scan, MRI, or ultrasound image).\n\nIMPORTANT: Look at the ENTIRE page carefully.\n\nAnswer 'YES' ONLY if:\n- More than 90% of the page shows a greyscale medical scan (bones, organs, etc.)\n- There is minimal text (just patient name/labels at corners/edges)\n- The scan itself fills most of the page\n- Examples: Full-page chest X-ray, brain MRI scan, CT slice\n\nAnswer 'NO' if...",
-    "prompt_length": 1163,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
-    ],
-    "num_images": 1,
-    "response": "ANALYSIS: The image contains patient demographics, lab results (CBC and metabolic panel), clinical notes, and interpretation.\nANSWER: NO",
-    "response_length": 136,
-    "duration_seconds": 3.34,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:28:07.253761",
-    "function": "has_embedded_medical_images",
-    "prompt": "Analyze this medical report page. Does this page contain any embedded medical imaging scans \n(such as X-rays, CT scans, MRI images, ultrasound images, or other diagnostic images) \nmixed with text or within a report format?\n\nAnswer with ONLY 'YES' or 'NO'.\n- Answer 'YES' if there are any visible medical scans/images embedded in the document.\n- Answer 'NO' if the page only contains text, tables, or forms without any medical imaging.",
-    "prompt_length": 434,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
-    ],
-    "num_images": 1,
-    "response": "NO\n",
-    "response_length": 3,
-    "duration_seconds": 2.444,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:29:41.248293",
-    "function": "extract_patient_and_doctor_info",
-    "prompt": "You are extracting DEMOGRAPHIC INFORMATION from medical documents.\n\nTASK: Find and extract ONLY the patient's personal details and doctor's contact information.\n\nWHAT TO EXTRACT:\n- patient_info.name: The PATIENT's full name (the person receiving medical care)\n- patient_info.age: The patient's age in years\n- patient_info.sex: Male, Female, or Other\n- doctor_info.name: The DOCTOR's name (usually has \"Dr.\" prefix)\n- doctor_info.phone: Doctor's phone number\n- doctor_info.email: Doctor's email addres...",
-    "prompt_length": 1280,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_1.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_2.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_3.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_4.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_5.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_6.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
-    ],
-    "num_images": 7,
-    "response": "```json\n{\n  \"patient_info\": {\n    \"name\": \"Ayush Kumar\",\n    \"age\": 20,\n    \"sex\": \"Male\"\n  },\n  \"doctor_info\": {\n    \"name\": \"Dr. Ramakant\",\n    \"phone\": \"91 620 6083, 96123196091\",\n    \"email\": \"ayush.diagnostic.2024@gmail.com\"\n  },\n  \"patient_history\": \"fracture shaft of clavicle\",\n  \"patient_history\": \"shoulder pain, arthritis\",\n  \"patient_history\": \"fracture\",\n  \"patient_history\": \"Arthroscopic Surgery\",\n  \"patient_history\": \"ACL suture\",\n  \"patient_history\": \"ACL Reconstruction\",\n  \"patient_history\": \"Knee surgery\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"Arthroscopic\",\n  \"patient_history\": \"Osteoarthritis\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"Arthritis\",\n  \"patient_history\": \"...",
-    "response_length": 6245,
-    "duration_seconds": 93.992,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:31:01.033305",
-    "function": "extract_report_summary",
-    "prompt": "CRITICAL: Output ONLY a valid JSON object. Do NOT include any text before or after the JSON.\n\nRead the medical documents and create a clear, helpful summary for a patient.\n\nFIELD DEFINITIONS:\n\n1. main_findings: A brief medical summary (2-3 sentences about what was found).\n\n2. patient_explanation: A detailed explanation (5-8 sentences) covering:\n   - What condition/injury was found\n   - What tests or imaging were done (X-ray, CT scan, blood test, etc.)\n   - What the test results showed\n   - What ...",
-    "prompt_length": 1381,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_1.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_2.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_3.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_4.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_5.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_6.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
-    ],
-    "num_images": 7,
-    "response": "<unused94>thought\nThe user wants me to extract medical findings from a collection of medical documents and present them in a specific JSON format.\n\n**JSON Structure:**\n\n```json\n{\n    \"report_summary\": {\n        \"main_findings\": \"brief medical findings summary\",\n        \"patient_explanation\": \"detailed 5-8 sentence patient-friendly explanation\",\n        \"diagnosis\": \"specific medical diagnosis\",\n        \"recommendations\": \"doctor's advice for follow-up\"\n    }\n}\n```\n\n**Input Documents:**\n\n1.  **Image 1:** X-ray report (shoulder) with a fracture.\n2.  **Image 2:** X-ray report (shoulder) with a fracture.\n3.  **Image 3:** X-ray report (shoulder) with a fracture.\n4.  **Image 4:** X-ray report (shoulder) with a fracture.\n5.  **Image 5:** X-ray report (shoulder) with a fracture.\n6.  **Image 6:** X-ray report (shoulder) with a fracture.\n7.  **Image 7:** X-ray report (shoulder) with a fracture.\n8.  **Image 8:** Blood test report (CBC and Metabolic).\n\n**Extraction Process:**\n\n1.  **Identify Key F...",
-    "response_length": 5721,
-    "duration_seconds": 79.781,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:32:33.026466",
-    "function": "extract_medications_and_appointments",
-    "prompt": "You are extracting PRESCRIPTION and APPOINTMENT information from medical documents.\n\nTASK: Find any prescribed medications and scheduled follow-up appointments.\n\nWHAT TO EXTRACT:\n\n1. medications: List of prescribed drugs/medicines\n   - name: The medicine/drug name (e.g., \"Paracetamol\", \"Amoxicillin\", \"Calcium supplement\")\n   - dosage: Amount per dose (e.g., \"500mg\", \"10ml\")\n   - frequency: How often to take (e.g., \"twice daily\", \"every 8 hours\", \"after meals\")\n   - duration: How long to take (e....",
-    "prompt_length": 1243,
-    "image_paths": [
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_1.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_2.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_3.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_4.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_5.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_6.png",
-      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
-    ],
-    "num_images": 7,
-    "response": "<unused94>thought\nThe user wants me to extract prescribed medications and follow-up appointments from the provided medical documents.\n\n1.  **Analyze the request:**\n    *   Extract only actual medications (drugs/medicines).\n    *   Do not include diagnoses, medical devices, bills, or test names.\n    *   Extract medication name, dosage, frequency, and duration.\n    *   Extract the next follow-up appointment date/time.\n    *   Ignore if no medications are prescribed.\n    *   Respond with ONLY the JSON format.\n\n2.  **Process each document:**\n\n    *   **Document 1:** \"X-ray\" - Contains X-ray image and consultation details. No medications found.\n    *   **Document 2:** \"ADvanced Bone Joint\" - Contains X-ray image and consultation details. No medications found.\n    *   **Document 3:** \"SIAD\" - Contains X-ray image and consultation details. No medications found.\n    *   **Document 4:** \"Nuro\" - Contains X-ray image and consultation details. No medications found.\n    *   **Document 5:** \"Nuro\" ...",
-    "response_length": 7639,
-    "duration_seconds": 91.992,
-    "success": true,
-    "error": null,
-    "metadata": {}
-  },
-  {
-    "timestamp": "2026-01-25T01:32:34.245974",
-    "function": "extract_medications_and_appointments_cleanup",
-    "prompt": "CRITICAL: Output ONLY a valid JSON object. Do NOT include any thinking, explanations, or text before or after the JSON.\n\nThe text below is a messy AI response that was supposed to extract medical data. Extract ALL medical information you can find and output it as clean JSON.\n\nREQUIRED OUTPUT FORMAT (output EXACTLY this structure):\n{\n    \"medications\": [{\"name\": \"string\", \"dosage\": \"string or null\", \"frequency\": \"string or null\", \"duration\": \"string or null\"}],\n    \"next_appointment\": \"string or ...",
-    "prompt_length": 3797,
+    "timestamp": "2026-01-26T01:27:30.055727",
+    "function": "extract_patient_and_doctor_info_from_text",
+    "prompt": "You are extracting DEMOGRAPHIC INFORMATION from the following medical document text.\n\nDOCUMENT TEXT:\n[Page 1 from docs]\nAYUSH KUMAR (20) M, 19 years (s)\nSHOULDER AP VIEW,\nRADHAKRISHNAN AYURVEDIC CLINIC, EAST BERING CANAL ROAD, PATNA-01\n\"},{\"DR. R. RAMAKANT\nKUMAR\"},{\"85 05 2024\"\n2024-10-02\n\"]},\nচট্টগ্রাম mini\n\n--- PAGE BREAK ---\n\n[Page 1 from blood]\nNeoGen Diagnostics Laboratory\n123 Medical Center Dr, Tech City, 90210\nPATIENT REPORT: COMPREHENSIVE METABOLIC PANEL\nPatient Name: Ayush\nPatient ID: A...",
+    "prompt_length": 3551,
     "image_paths": [],
     "num_images": 0,
-    "response": "```json\n{\n    \"medications\": [],\n    \"next_appointment\": null\n}\n```",
-    "response_length": 67,
-    "duration_seconds": 1.216,
+    "response": "```json\n{\n    \"patient_info\": {\n        \"name\": \"Ayush Kumar\",\n        \"age\": \"20\",\n        \"sex\": \"Male\"\n    },\n    \"doctor_info\": {\n        \"name\": \"Dr. R. RAMAKANT\",\n        \"phone\": null,\n        \"email\": null\n    },\n    \"patient_history\": null\n}\n```",
+    "response_length": 254,
+    "duration_seconds": 2.33,
+    "success": true,
+    "error": null,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-26T01:27:51.446323",
+    "function": "extract_medications_and_appointments_from_text",
+    "prompt": "You are extracting PRESCRIPTION and APPOINTMENT information from the following medical document text.\n\nDOCUMENT TEXT:\n[Page 1 from docs]\nAYUSH KUMAR (20) M, 19 years (s)\nSHOULDER AP VIEW,\nRADHAKRISHNAN AYURVEDIC CLINIC, EAST BERING CANAL ROAD, PATNA-01\n\"},{\"DR. R. RAMAKANT\nKUMAR\"},{\"85 05 2024\"\n2024-10-02\n\"]},\nচট্টগ্রাম mini\n\n--- PAGE BREAK ---\n\n[Page 2 from docs]\nSEEMA DIAGNOSTIC CENTER\nMOST ADVANCED 96 Slice CT Scanner\nADVANCED DENTAL IMAGING CBCT & OPG\n\nPatient Name : AYUSH KUMAR\nAge/Sex : 19...",
+    "prompt_length": 14685,
+    "image_paths": [],
+    "num_images": 0,
+    "response": "<unused94>thought\nThe user wants to extract medication and appointment information from a medical document.\n\n1.  **Analyze the provided text:** I need to read through each page of the document to identify potential medications and appointment details.\n\n    *   **Page 1:** Contains patient information (Ayush Kumar), doctor details (Dr. R. Ramakant Kumar), clinic details, and a diagnostic note (\"Displaced Fracture shaft of clavicle Left\"). It mentions a surgery date (29/03/2024). It also contains a table labeled \"Medicine\", \"Dosage\", \"Timing - Freq.\", and \"Duration\". The last entry is \"Patient whose details are mentioned above was not under influence of alcohol at the time of admission *\".\n    *   **Page 2:** Contains diagnostic center details (SEEMA DIAGNOSTIC CENTER), scan types (CT Scanner, X-ray), patient details (Ayush Kumar), referring doctor (Dr. Ramakanth Kumar), results (\"LEFT SHOULDER AP\", \"Fracture shaft of left clavicle with nailing and plate seen in situ. Rest of the visuali...",
+    "response_length": 4304,
+    "duration_seconds": 21.382,
+    "success": true,
+    "error": null,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-26T01:28:00.285966",
+    "function": "extract_report_summary",
+    "prompt": "CRITICAL: Output ONLY a valid JSON object. Do NOT include any text before or after the JSON.\n\nThe images are of a patients medical report. Read the medical documents and create a clear, helpful summary for a patient.\n\nFIELD DEFINITIONS:\n\n1. main_findings: A brief medical summary (2-3 sentences about what was found).\n\n2. patient_explanation: A detailed explanation covering:\n   - What condition/injury was found\n   - What tests or imaging were done (X-ray, CT scan, blood test, etc.)\n   - What the t...",
+    "prompt_length": 1324,
+    "image_paths": [
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_1.png",
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_2.png",
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_3.png",
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_4.png",
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_5.png",
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\docs_page_6.png",
+      "C:\\Users\\AYUSH\\Downloads\\medgemma-main\\output\\pdf_images\\blood_page_1.png"
+    ],
+    "num_images": 7,
+    "response": "{\n    \"report_summary\": {\n        \"main_findings\": \"The patient has a displaced fracture in the left shoulder. In the left leg, there is a steel plate seen in situ.\",\n        \"patient_explanation\": \"The patient, AYUSH KUMAR, underwent a left shoulder surgery last year involving a fracture and plate insertion. He also had a left leg surgery involving a steel plate. The scan (CT scan) shows the presence of steel plates within the left leg bone, indicating previous orthopedic surgery. Further details are provided in the medical report.\",\n        \"diagnosis\": \"Displaced Fracture (Left Shoulder), Steel plate in situ (Left Leg)\",\n        \"recommendations\": \"Follow-up with the orthopedic surgeon is recommended for monitoring the fracture healing and overall recovery. Based on the findings, orthopedic treatment is likely needed.\"\n    }\n}\n",
+    "response_length": 842,
+    "duration_seconds": 8.84,
     "success": true,
     "error": null,
     "metadata": {}

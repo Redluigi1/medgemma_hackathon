@@ -1,0 +1,40 @@
+{
+  "patient_info": {
+    "name": "Aaron Kumar",
+    "age": "28",
+    "sex": "Male"
+  },
+  "doctor_info": {
+    "name": "Dr. S. Mehta",
+    "phone": null,
+    "email": null
+  },
+  "patient_history": null,
+  "report_summary": {
+    "main_findings": "The patient presented with acute bilateral eye inflammation (iritis), evidenced by increased intraocular pressure, optic disc changes, and vitreal detachment in both eyes. Slit lamp examination confirmed these findings.",
+    "patient_explanation": "The patient experienced sudden blurred vision in both eyes and a foreign body sensation in the right eye. An ophthalmic specialist performed a Slit Lamp Examination and Ophthalmoscopy. The tests revealed inflammation in both eyes, resulting in increased intraocular pressure (150K), optic disc changes (G), and bilateral vitreal detachments. The likely condition is acute bilateral eye inflammation (iritis), potentially related to glaucoma.",
+    "diagnosis": "Acute Bilateral Eye Inflammation (Iritis (Glaucoma)) with Vitreal Detachment",
+    "recommendations": "Follow-up appointment in one week. Continue using prescribed anti-inflammatory drops. Monitor symptoms. Avoid activities that could injure the eyes."
+  },
+  "medications": [
+    {
+      "name": "Inj. Paracetamol",
+      "dosage": "1gm",
+      "frequency": "TDS (SOS Fever)",
+      "duration": null
+    },
+    {
+      "name": "Inj. Pantoprazole",
+      "dosage": "40mg",
+      "frequency": "OD (Morning)",
+      "duration": null
+    },
+    {
+      "name": "Tab. Caripill",
+      "dosage": "1100mg",
+      "frequency": "TDS",
+      "duration": null
+    }
+  ],
+  "next_appointment": "This coming Friday"
+}

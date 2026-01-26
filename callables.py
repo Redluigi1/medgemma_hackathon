@@ -107,9 +107,9 @@ def predict_multimodal(prompt: str, image_paths: list, system_prompt: str = "You
         print(f"Error: {e}")
         return None
 
-# --- Example Usage ---
-images = ["img4.png"]
-result = predict_multimodal("Summarize these reports.", images)
-print(result)
+# # --- Example Usage ---
+# images = ["img4.png"]
+# result = predict_multimodal("Summarize these reports.", images)
+# print(result)
 
 
