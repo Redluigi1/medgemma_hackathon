@@ -12,28 +12,119 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
 # 1. Load configuration
 load_dotenv()
 
-def get_bounding_boxes(image_path):
+def get_bounding_boxes(image_path, confidence_threshold=0.0, filter_overlapping=True, overlap_conf_threshold=0.5, overlap_ratio_threshold=0.7):
     """
-    Performs inference and returns a list of bounding box coordinates.
+    Performs inference and returns a list of bounding box coordinates with confidence scores.
+    
+    Args:
+        image_path: Path to the image file
+        confidence_threshold: Minimum confidence to include a detection (default 0.0)
+        filter_overlapping: If True, filter out smaller low-confidence boxes inside larger boxes
+        overlap_conf_threshold: Confidence threshold below which smaller overlapping boxes are removed (default 0.5)
+        overlap_ratio_threshold: How much of the smaller box must be inside the larger box to be filtered (default 0.7 = 70%)
     
     Returns:
-        list: A list of lists, where each inner list is [x1, y1, x2, y2]
+        list: A list of dicts, where each dict has 'bbox' [x1, y1, x2, y2] and 'confidence' (float)
     """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Construct the path relative to the script location
-    model_path = os.path.join(base_dir, 'fine_tune_yolo/runs/detect/train3/weights/best.pt')
+    model_path = os.path.join(base_dir, 'fine_tune_yolo/runs/detect/train4/weights/best.pt')
     # Load the model
     model = YOLO(model_path)
     
     # Run inference
     results = model(image_path)[0]
     
-    # Extract boxes (xyxy format: top-left and bottom-right corners)
-    # .tolist() converts the tensor to a standard Python list
+    # Extract boxes (xyxy format: top-left and bottom-right corners) and confidence scores
     boxes = results.boxes.xyxy.cpu().numpy().tolist()
+    confidences = results.boxes.conf.cpu().numpy().tolist()
     
-    return boxes
+    # Combine into list of dicts
+    detections = []
+    for box, conf in zip(boxes, confidences):
+        if conf >= confidence_threshold:
+            detections.append({
+                'bbox': box,
+                'confidence': conf
+            })
+    
+    # Filter overlapping boxes if enabled
+    if filter_overlapping and len(detections) > 1:
+        detections = filter_overlapping_boxes(detections, overlap_conf_threshold, overlap_ratio_threshold)
+    
+    return detections
+
+
+def filter_overlapping_boxes(detections, conf_threshold=0.5, overlap_ratio=0.7):
+    """
+    Filter out smaller bounding boxes that are significantly inside larger ones
+    and have low confidence.
+    
+    If a smaller box is more than overlap_ratio (e.g., 70%) inside a larger box
+    and the smaller box has confidence below conf_threshold (e.g., 0.5),
+    the smaller box is removed and only the larger one is kept.
+    
+    Args:
+        detections: List of dicts with 'bbox' [x1, y1, x2, y2] and 'confidence'
+        conf_threshold: Confidence threshold below which to consider removing a box
+        overlap_ratio: Fraction of smaller box that must be inside larger box to remove it
+    
+    Returns:
+        list: Filtered list of detections
+    """
+    if len(detections) <= 1:
+        return detections
+    
+    def box_area(box):
+        """Calculate area of a bounding box."""
+        x1, y1, x2, y2 = box
+        return max(0, x2 - x1) * max(0, y2 - y1)
+    
+    def intersection_area(box1, box2):
+        """Calculate intersection area between two boxes."""
+        x1 = max(box1[0], box2[0])
+        y1 = max(box1[1], box2[1])
+        x2 = min(box1[2], box2[2])
+        y2 = min(box1[3], box2[3])
+        
+        if x2 <= x1 or y2 <= y1:
+            return 0
+        return (x2 - x1) * (y2 - y1)
+    
+    # Sort by area (largest first)
+    sorted_dets = sorted(detections, key=lambda d: box_area(d['bbox']), reverse=True)
+    
+    # Track which indices to keep
+    keep = [True] * len(sorted_dets)
+    
+    for i in range(len(sorted_dets)):
+        if not keep[i]:
+            continue
+        
+        box_i = sorted_dets[i]['bbox']
+        area_i = box_area(box_i)
+        
+        for j in range(i + 1, len(sorted_dets)):
+            if not keep[j]:
+                continue
+            
+            box_j = sorted_dets[j]['bbox']
+            area_j = box_area(box_j)
+            conf_j = sorted_dets[j]['confidence']
+            
+            # Check if smaller box (j) is significantly inside larger box (i)
+            intersection = intersection_area(box_i, box_j)
+            
+            if area_j > 0:
+                overlap_fraction = intersection / area_j
+                
+                # If smaller box is mostly inside larger box AND has low confidence, remove it
+                if overlap_fraction >= overlap_ratio and conf_j < conf_threshold:
+                    keep[j] = False
+    
+    # Return only the kept detections
+    return [det for det, k in zip(sorted_dets, keep) if k]
 
 # Example usage:
 # base_dir = os.path.dirname(os.path.abspath(__file__))

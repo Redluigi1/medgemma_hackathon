@@ -54,6 +54,7 @@ class MedicalReportProcessor:
         self.detailed_summary = ""  # Extracted first, used as context for image descriptions
         self.tabular_reports = []  # Store extracted tabular data from report pages
         self.page_image_map = {}  # Maps page_num to image_path for context
+        self.page_texts = []  # Extracted text from each page for text-based processing
     
     # ==================== PDF TO IMAGE CONVERSION ====================
     
@@ -268,6 +269,70 @@ Answer with ONLY 'YES' or 'NO'.
         
         return "YES" in response.upper()
     
+    def classify_and_extract_text(self, image_path: str) -> dict:
+        """
+        Combined API call that checks for embedded medical images AND extracts all text in one call.
+        This saves costs by avoiding separate calls for classification and text extraction.
+        
+        Args:
+            image_path: Path to the PDF page image
+            
+        Returns:
+            Dict with:
+            - has_embedded_medical_images: bool
+            - extracted_text: str (all text from the page)
+        """
+        prompt = """Analyze this PDF page and provide TWO things:
+
+1. HAS_MEDICAL_IMAGES: Does this page contain any medical imaging scans (X-rays, CT scans, MRI images, ultrasound images, or other diagnostic images)?
+   - Answer YES if there are any medical scans/images visible anywhere on the page (whether full-page or embedded within text/forms)
+   - Answer NO if the page only has text, tables, or forms without any medical images
+
+2. EXTRACTED_TEXT: Extract ALL readable text from this page. Include:
+   - Patient names, ages, dates
+   - Doctor names, hospital/clinic names
+   - Test names and values
+   - Medications listed
+   - Diagnoses and findings
+   - Appointment dates
+   - Any other relevant text
+
+Format your response EXACTLY as:
+HAS_MEDICAL_IMAGES: YES or NO
+EXTRACTED_TEXT:
+[all the text content from the page goes here]"""
+
+        response = self._call_llm_with_logging(
+            prompt=prompt,
+            image_paths=[image_path],
+            function_name="classify_and_extract_text",
+            system_prompt="You are a medical document analyzer. Classify the page type accurately and extract all text content verbatim."
+        )
+        
+        result = {
+            "has_embedded_medical_images": False,
+            "extracted_text": ""
+        }
+        
+        response_upper = response.upper()
+        
+        # Parse HAS_MEDICAL_IMAGES
+        embedded_match = re.search(r'HAS_MEDICAL_IMAGES:\s*(YES|NO)', response_upper)
+        if embedded_match:
+            result["has_embedded_medical_images"] = embedded_match.group(1) == 'YES'
+        
+        # Parse EXTRACTED_TEXT (everything after "EXTRACTED_TEXT:")
+        text_match = re.search(r'EXTRACTED_TEXT:\s*\n?(.*)', response, re.DOTALL | re.IGNORECASE)
+        if text_match:
+            result["extracted_text"] = text_match.group(1).strip()
+        
+        self.logger.logger.info(
+            f"Page classified: has_medical_images={result['has_embedded_medical_images']}, "
+            f"text_length={len(result['extracted_text'])} chars"
+        )
+        
+        return result
+    
     def is_report_page(self, image_path: str) -> dict:
         """
         Classify if a page is a structured report (lab results, prescriptions, etc.).
@@ -460,7 +525,7 @@ Output ONLY the JSON object, no other text or markdown."""
         Returns:
             True if confirmed as medical image
         """
-        prompt = """Is this image a medical diagnostic scan (eg : X-ray, CT scan, MRI, ultrasound, etc.)?
+        prompt = """Is this image a medical diagnostic scan (X-ray, CT scan, MRI, ultrasound, etc.)?
 
 Answer with ONLY 'YES' or 'NO'."""
 
@@ -617,12 +682,12 @@ DESCRIPTION: [your actual description text here - 3-5 sentences for the patient 
     def process_page_for_medical_images(self, image_path: str, source_pdf: str, page_num: int):
         """
         Process a single PDF page for medical images AND structured reports.
-        Directly runs CNN to detect medical images and confirms with LLM.
+        Also extracts text from the page in a single combined API call for cost savings.
         
-        Logic:
-        1. Run CNN (YOLO) on every page to detect potential medical images
-        2. Confirm each detected region with LLM using confirm_medical_image
-        3. If structured report -> extract tabular data with specialized agent
+        Logic (two-stage for reports):
+        1. FIRST: Classify page AND extract text in one call (cost optimization)
+        2. If structured report -> extract tabular data with specialized agent
+        3. If has medical images -> run CNN to extract sub-images
         
         Args:
             image_path: Path to the PDF page image
@@ -634,8 +699,22 @@ DESCRIPTION: [your actual description text here - 3-5 sentences for the patient 
         # Store page image path for context when describing sub-images
         self.page_image_map[page_num] = image_path
         
+        # === COMBINED CLASSIFICATION AND TEXT EXTRACTION (cost optimization) ===
+        # Single API call to check for medical images AND extract all text
+        classification = self.classify_and_extract_text(image_path)
+        
+        # Store extracted text for later text-based extraction
+        if classification["extracted_text"]:
+            self.page_texts.append({
+                "page_num": page_num,
+                "source_pdf": source_pdf,
+                "text": classification["extracted_text"]
+            })
+        
+        has_medical_images = classification["has_embedded_medical_images"]
+        
         # === TWO-STAGE REPORT PROCESSING ===
-        # Stage 1: Classify if this is a structured report page
+        # Stage 1: Classify if this is a structured report page (using separate call for now)
         report_classification = self.is_report_page(image_path)
         
         if report_classification["is_report"]:
@@ -651,43 +730,44 @@ DESCRIPTION: [your actual description text here - 3-5 sentences for the patient 
             # as some reports may contain embedded images (e.g., radiology reports with X-rays)
         
         # === MEDICAL IMAGE PROCESSING ===
-        # Directly run CNN on every page to detect medical images
-        self.logger.logger.info(f"Page {page_num}: Running CNN to detect medical images...")
-        
-        try:
-            # Use YOLO to find bounding boxes (with overlapping box filtering enabled)
-            detections = get_bounding_boxes(image_path)
-            self.logger.logger.info(f"Found {len(detections)} potential medical image regions")
+        # If medical images detected, run CNN to extract them
+        if has_medical_images:
+            self.logger.logger.info(f"Page {page_num}: Has medical images, running CNN...")
             
-            if detections:
-                # Extract sub-images using detection dicts
-                cropped_paths = self.extract_sub_images(image_path, detections, source_pdf, page_num)
+            # Use YOLO to find bounding boxes (with overlapping box filtering enabled)
+            try:
+                detections = get_bounding_boxes(image_path)
+                self.logger.logger.info(f"Found {len(detections)} medical image regions after filtering")
                 
-                # Confirm each sub-image is a medical image using LLM
-                for crop_path in cropped_paths:
-                    if self.confirm_medical_image(crop_path):
-                        # Get description with context (sub-image = include page context)
-                        desc_result = self.describe_medical_image(
-                            crop_path, 
-                            is_full_page=False, 
-                            page_image_path=image_path
-                        )
-                        self.image_gallery["medical_images"].append({
-                            "image_path": crop_path,
-                            "type": "extracted_image",
-                            "source_pdf": source_pdf,
-                            "page_number": page_num,
-                            "caption": desc_result["caption"],
-                            "description": desc_result["description"]
-                        })
-                    else:
-                        self.logger.logger.info(f"Cropped image not confirmed as medical: {crop_path}")
-                        # Delete non-medical crops
-                        os.remove(crop_path)
-            else:
-                self.logger.logger.info(f"Page {page_num}: No medical images detected by CNN")
-        except Exception as e:
-            self.logger.logger.error(f"Error running CNN on page {page_num}: {e}")
+                if detections:
+                    # Extract sub-images using detection dicts
+                    cropped_paths = self.extract_sub_images(image_path, detections, source_pdf, page_num)
+                    
+                    # Confirm each sub-image is a medical image
+                    for crop_path in cropped_paths:
+                        if self.confirm_medical_image(crop_path):
+                            # Get description with context (sub-image = include page context)
+                            desc_result = self.describe_medical_image(
+                                crop_path, 
+                                is_full_page=False, 
+                                page_image_path=image_path
+                            )
+                            self.image_gallery["medical_images"].append({
+                                "image_path": crop_path,
+                                "type": "extracted_image",
+                                "source_pdf": source_pdf,
+                                "page_number": page_num,
+                                "caption": desc_result["caption"],
+                                "description": desc_result["description"]
+                            })
+                        else:
+                            self.logger.logger.info(f"Cropped image not confirmed as medical: {crop_path}")
+                            # Delete non-medical crops
+                            os.remove(crop_path)
+            except Exception as e:
+                self.logger.logger.error(f"Error running CNN on page {page_num}: {e}")
+        else:
+            self.logger.logger.info(f"Page {page_num}: No medical images detected")
     
     # ==================== STRUCTURED DATA EXTRACTION ====================
     
@@ -701,7 +781,7 @@ DESCRIPTION: [your actual description text here - 3-5 sentences for the patient 
         """
         self.logger.logger.info("Extracting detailed summary for context...")
         
-        prompt = """Analyze these medical report pages and provide a DETAILED SUMMARY.
+        prompt = """Analyze these medical report pages and provide a DETAILED SUMMARY suitable for a patient to understand.
 
 Include:
 1. What medical condition/issue is being reported
@@ -709,16 +789,15 @@ Include:
 3. What the findings show
 4. Any treatments or surgeries that were performed
 5. The current status and prognosis
-6. Any other relevant information related to the patient
 
-Be thorough but avoid excessive medical jargon.
-"""
+Write in clear, simple language a patient can understand. Be thorough but avoid excessive medical jargon.
+Keep the summary to 150-200 words."""
 
         self.detailed_summary = self._call_llm_with_logging(
             prompt=prompt,
             image_paths=image_paths,
             function_name="extract_detailed_summary",
-            system_prompt="You are a medical professional explaining these reports."
+            system_prompt="You are a medical professional explaining reports to patients in simple terms."
         )
         
         self.logger.logger.info(f"Detailed summary extracted: {len(self.detailed_summary)} chars")
@@ -1045,15 +1124,14 @@ JSON OUTPUT:"""
     
     def extract_patient_and_doctor_info(self, image_paths: list) -> dict:
         """
-        Extract patient info and doctor info.
+        Extract patient info, doctor info, and patient history.
         Focused call for demographic and contact information.
-        Note: patient_history is extracted separately using extract_patient_history_from_text.
         
         Args:
             image_paths: List of paths to PDF page images
             
         Returns:
-            Dictionary with patient_info, doctor_info
+            Dictionary with patient_info, doctor_info, patient_history
         """
         self.logger.logger.info("Extracting patient and doctor information...")
         
@@ -1068,12 +1146,13 @@ WHAT TO EXTRACT:
 - doctor_info.name: The DOCTOR's name (usually has "Dr." prefix)
 - doctor_info.phone: Doctor's phone number
 - doctor_info.email: Doctor's email address
+- patient_history: Any mentioned past medical conditions, allergies, or previous treatments
 
 WHAT TO IGNORE:
 - Hospital/clinic names and addresses (these are NOT the patient or doctor name)
 - Bill amounts, invoice numbers, bank details
 - Test results and findings (those go elsewhere)
-- Past medical history (that is extracted separately)
+- Dates of visits (unless it's medical history)
 
 Respond with ONLY this JSON (no other text):
 {
@@ -1086,7 +1165,8 @@ Respond with ONLY this JSON (no other text):
         "name": "doctor's name (with Dr. prefix) or null",
         "phone": "phone number or null",
         "email": "email or null"
-    }
+    },
+    "patient_history": "past medical conditions/allergies mentioned or null"
 }"""
 
         response = self._call_llm_with_logging(
@@ -1098,65 +1178,11 @@ Respond with ONLY this JSON (no other text):
         
         expected_schema = """{
     "patient_info": {"name": "string or null", "age": "string or null", "sex": "string or null"},
-    "doctor_info": {"name": "string or null", "phone": "string or null", "email": "string or null"}
-}"""
-        
-        return self._parse_json_from_llm_response(response, "extract_patient_and_doctor_info", expected_schema)
-    
-    def extract_patient_history_from_text(self, text: str) -> dict:
-        """
-        Extract patient history (past medical conditions, allergies, previous treatments)
-        from the detailed summary text.
-        This is a dedicated LLM call for patient history extraction.
-        
-        Args:
-            text: The detailed summary text extracted from the medical report
-            
-        Returns:
-            Dictionary with patient_history
-        """
-        self.logger.logger.info("Extracting patient history from detailed summary...")
-        
-        prompt = f"""You are extracting PATIENT MEDICAL HISTORY from the following medical document summary.
-
-DOCUMENT SUMMARY:
-{text}
-
-TASK: Find and extract ALL information about the patient's medical history.
-
-WHAT TO EXTRACT (include ALL that apply):
-- Past medical conditions (e.g., diabetes, hypertension, heart disease, asthma)
-- Known allergies (medications, food, environmental)
-- Previous surgeries or procedures
-- Previous treatments for any conditions
-- Chronic conditions
-- Family medical history if mentioned
-- Previous hospitalizations
-- Pre-existing conditions
-
-WHAT TO IGNORE:
-- Current diagnosis (that's the new condition being reported)
-- Current treatment plan (that's the new treatment)
-- Test results and findings (those go elsewhere)
-- Doctor/patient demographic info
-
-Respond with ONLY this JSON (no other text):
-{{
-    "patient_history": "comprehensive description of past medical conditions, allergies, and previous treatments, or null if none mentioned"
-}}"""
-
-        response = self._call_llm_with_logging(
-            prompt=prompt,
-            image_paths=None,  # Text-only call
-            function_name="extract_patient_history_from_text",
-            system_prompt="You are a medical records specialist. Extract ONLY past medical history information. Be thorough - include all allergies, previous conditions, and prior treatments mentioned."
-        )
-        
-        expected_schema = """{
+    "doctor_info": {"name": "string or null", "phone": "string or null", "email": "string or null"},
     "patient_history": "string or null"
 }"""
         
-        return self._parse_json_from_llm_response(response, "extract_patient_history_from_text", expected_schema)
+        return self._parse_json_from_llm_response(response, "extract_patient_and_doctor_info", expected_schema)
     
     def extract_report_summary(self, image_paths: list) -> dict:
         """
@@ -1414,11 +1440,9 @@ Respond with ONLY this JSON (no other text):
     
     def extract_all_structured_data(self, image_paths: list, first_page_images: list = None):
         """
-        Extract all structured data from PDF.
-        
-        Uses:
-        - Image-based extraction for patient/doctor info (from first page images)
-        - Detailed summary text for medications/appointments extraction
+        Extract all structured data from PDF using text-based extraction for cost savings.
+        Uses pre-extracted text from page processing when available.
+        Falls back to image-based extraction if no text was extracted.
         
         Note: Lab results are extracted via the two-stage report extraction process
         and saved to tabular_reports.json, so they are not duplicated here.
@@ -1430,34 +1454,49 @@ Respond with ONLY this JSON (no other text):
         # Use first page images for patient/doctor info if provided, otherwise use all images
         patient_info_images = first_page_images if first_page_images else image_paths
         
-        # Extract patient/doctor info from first page images
-        self.logger.logger.info("Starting patient/doctor info extraction from FIRST PAGE IMAGES...")
-        patient_doctor_data = self.extract_patient_and_doctor_info(patient_info_images)
+        # Combine text from first pages only for patient/doctor info extraction
+        first_page_text = ""
+        if self.page_texts and first_page_images:
+            # Get text only from first pages (page_num == 1)
+            first_page_texts = [pt for pt in self.page_texts if pt['page_num'] == 1]
+            if first_page_texts:
+                first_page_text = "\n\n--- PAGE BREAK ---\n\n".join([
+                    f"[Page {pt['page_num']} from {pt['source_pdf']}]\n{pt['text']}" 
+                    for pt in first_page_texts
+                ])
+                self.logger.logger.info(f"Using first page text for patient/doctor info extraction ({len(first_page_text)} chars)")
         
-        # Retry once if patient name is null (to improve reliability)
-        patient_info = patient_doctor_data.get("patient_info", {})
-        if patient_info is None or patient_info.get("name") is None:
-            self.logger.logger.info("Patient name is null, retrying extraction once more...")
+        # Combine all extracted text from pages for medications
+        combined_text = ""
+        if self.page_texts:
+            combined_text = "\n\n--- PAGE BREAK ---\n\n".join([
+                f"[Page {pt['page_num']} from {pt['source_pdf']}]\n{pt['text']}" 
+                for pt in self.page_texts
+            ])
+            self.logger.logger.info(f"Using pre-extracted text for structured data extraction ({len(combined_text)} chars)")
+        
+        if first_page_text:
+            # Use text-based extraction for patient/doctor info from first pages only
+            self.logger.logger.info("Starting patient/doctor info extraction from FIRST PAGE TEXT (cost-optimized)...")
+            patient_doctor_data = self.extract_patient_and_doctor_info_from_text(first_page_text)
+        elif combined_text:
+            # Fallback to all text if first page text not available
+            self.logger.logger.info("Starting patient/doctor info extraction from all TEXT...")
+            patient_doctor_data = self.extract_patient_and_doctor_info_from_text(combined_text)
+        else:
+            # Fallback: Use image-based extraction if no text was extracted
+            self.logger.logger.warning("No pre-extracted text available, falling back to image-based extraction...")
+            # Use only first page images for patient/doctor info
             patient_doctor_data = self.extract_patient_and_doctor_info(patient_info_images)
         
-        # Extract patient history from the detailed summary (dedicated LLM call)
-        patient_history_data = {"patient_history": None}
-        if self.detailed_summary:
-            self.logger.logger.info(f"Using detailed_summary for patient history extraction ({len(self.detailed_summary)} chars)")
-            patient_history_data = self.extract_patient_history_from_text(self.detailed_summary)
+        if combined_text:
+            # Call 2: Medications and next appointment (from all text)
+            meds_data = self.extract_medications_and_appointments_from_text(combined_text)
         else:
-            self.logger.logger.warning("No detailed summary available for patient history extraction")
-        
-        # Extract medications and appointments from the detailed summary
-        if self.detailed_summary:
-            self.logger.logger.info(f"Using detailed_summary for medications extraction ({len(self.detailed_summary)} chars)")
-            meds_data = self.extract_medications_and_appointments_from_text(self.detailed_summary)
-        else:
-            # Fallback: Use image-based extraction if no detailed summary available
-            self.logger.logger.warning("No detailed summary available, falling back to image-based extraction for medications...")
+            # Call 2: Medications and next appointment (from images)
             meds_data = self.extract_medications_and_appointments(image_paths)
         
-        # Extract report summary (still uses images for visual context)
+        # Call 3: Report summary (still uses images for visual context)
         summary_data = self.extract_report_summary(image_paths)
         
         # Note: Lab results are NOT extracted here - they are captured via the
@@ -1468,7 +1507,7 @@ Respond with ONLY this JSON (no other text):
         self.report_data = {
             "patient_info": patient_doctor_data.get("patient_info", None),
             "doctor_info": patient_doctor_data.get("doctor_info", None),
-            "patient_history": patient_history_data.get("patient_history", None),
+            "patient_history": patient_doctor_data.get("patient_history", None),
             "report_summary": summary_data.get("report_summary", None),
             "medications": meds_data.get("medications", []),
             "next_appointment": meds_data.get("next_appointment", None)
@@ -1580,8 +1619,8 @@ def main():
         # Default to example.pdf in the same directory
         base_dir = Path(__file__).parent
     
-        pdf_paths = [str(base_dir / "typhoid.pdf")]
-        # pdf_paths = [str(base_dir / "docs.pdf"), str(base_dir / "blood.pdf")]
+        pdf_paths = [str(base_dir / "dengue.pdf")]
+        pdf_paths = [str(base_dir / "docs.pdf"), str(base_dir / "blood.pdf")]
     
     # Check if PDFs exist
     for pdf_path in pdf_paths:
