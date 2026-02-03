@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Test files and sample PDFs (exclude from Docker image)
+*.pdf
+text.ipynb
+
+# Output directories (mounted as volumes)
+output/
+output1/
+logs/
+
+# Cached files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# YOLO training data (not needed in production)
+fine_tune_yolo/annotations/
+fine_tune_yolo/annotations_1/
+fine_tune_yolo/docs/
+fine_tune_yolo/docs1/
+fine_tune_yolo/raw_images/
+fine_tune_yolo/raw_images_1/
+fine_tune_yolo/yolo_dataset/
+fine_tune_yolo/non_medical_images/
+fine_tune_yolo/random_images/
+fine_tune_yolo/*.ipynb
+fine_tune_yolo/*.png
+fine_tune_yolo/*.py
+fine_tune_yolo/*.tex
+fine_tune_yolo/*.yaml
+fine_tune_yolo/yolo*.pt
+
+# Keep only the trained model weights
+!fine_tune_yolo/runs/

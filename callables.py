@@ -3,14 +3,16 @@ import os
 from google.cloud import aiplatform
 import base64
 from dotenv import load_dotenv
-from google.cloud import aiplatform
 from google.protobuf import json_format
 from google.protobuf.struct_pb2 import Value
-from dotenv import load_dotenv
-from google.cloud import aiplatform
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
-# 1. Load configuration
+
+# 1. Load configuration from .env first
 load_dotenv()
+
+# Set Google credentials from environment variable (loaded from .env)
+google_creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+if google_creds_path:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = google_creds_path
 
 def get_bounding_boxes(image_path, confidence_threshold=0.0, filter_overlapping=True, overlap_conf_threshold=0.5, overlap_ratio_threshold=0.7):
     """

@@ -462,7 +462,7 @@ Output ONLY the JSON object, no other text or markdown."""
         """
         prompt = """Is this image a medical diagnostic scan (eg : X-ray, CT scan, MRI, ultrasound, etc.)?
 
-Answer with ONLY 'YES' or 'NO'."""
+Answer with ONLY 'YES' or 'NO'. Answer 'NO' if the image is not a medical diagnostic scan."""
 
         response = self._call_llm_with_logging(
             prompt=prompt,

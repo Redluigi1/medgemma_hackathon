@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  medical-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Mount credentials file - uses path from .env (GOOGLE_APPLICATION_CREDENTIALS)
+      - ./${GOOGLE_APPLICATION_CREDENTIALS}:/app/key.json:ro
+      # Mount output directory to persist results
+      - ./output:/app/output
+      # Mount logs directory
+      - ./logs:/app/logs
+    environment:
+      # Override the path inside container (always /app/key.json since that's where we mount it)
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/key.json
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

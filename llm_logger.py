@@ -144,12 +144,21 @@ class LLMLogger:
 
 # Global logger instance
 _logger = None
+_current_log_dir = None
 
 def get_logger(log_dir: str = None) -> LLMLogger:
-    """Get or create the global LLM logger instance."""
-    global _logger
-    if _logger is None:
+    """Get or create the global LLM logger instance.
+    
+    If log_dir is provided and differs from the current logger's directory,
+    a new logger instance will be created.
+    """
+    global _logger, _current_log_dir
+    
+    # Reinitialize if log_dir changed or logger doesn't exist
+    if _logger is None or (log_dir is not None and log_dir != _current_log_dir):
         _logger = LLMLogger(log_dir)
+        _current_log_dir = log_dir
+    
     return _logger
 
 

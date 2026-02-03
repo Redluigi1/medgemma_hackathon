@@ -3,3 +3,5 @@
 key.json
 __pycache__/
 fine_tune_yolo/
+website/
+output/
