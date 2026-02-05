@@ -8,7 +8,7 @@ import json
 import time
 from pathlib import Path
 from datetime import datetime
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import re
 
 # PDF to image conversion
@@ -1692,6 +1692,166 @@ Respond with ONLY this JSON (no other text):
             "tabular_reports": self.tabular_reports,
             "llm_summary": summary
         }
+
+
+# ==================== IMAGE REGION QUERY FUNCTIONS ====================
+
+def annotate_image_with_bounding_box(image_path: str, bbox: dict, output_path: str = None) -> str:
+    """
+    Annotate an image with a red bounding box highlighting the region of interest.
+    
+    Args:
+        image_path: Path to the original image
+        bbox: Dictionary with keys 'x', 'y', 'width', 'height' (in pixels, relative to display size)
+               and optionally 'scale_x', 'scale_y' for scaling to natural dimensions
+        output_path: Optional path to save annotated image. If None, saves to temp file.
+    
+    Returns:
+        Path to the annotated image
+    """
+    # Open the image
+    img = Image.open(image_path)
+    draw = ImageDraw.Draw(img, 'RGBA')
+    
+    # Get bounding box coordinates
+    x = bbox.get('x', 0)
+    y = bbox.get('y', 0)
+    width = bbox.get('width', 100)
+    height = bbox.get('height', 100)
+    
+    # Scale if needed (frontend sends coordinates relative to displayed size)
+    scale_x = bbox.get('scale_x', 1.0)
+    scale_y = bbox.get('scale_y', 1.0)
+    
+    x = int(x * scale_x)
+    y = int(y * scale_y)
+    width = int(width * scale_x)
+    height = int(height * scale_y)
+    
+    # Draw semi-transparent red fill
+    draw.rectangle(
+        [x, y, x + width, y + height],
+        fill=(255, 0, 0, 77)  # Semi-transparent red (30% opacity)
+    )
+    
+    # Draw red border (6px thick)
+    border_width = 6
+    draw.rectangle(
+        [x, y, x + width, y + height],
+        outline=(255, 0, 0, 255),
+        width=border_width
+    )
+    
+    # Draw corner markers (circles at corners)
+    marker_radius = 12
+    corners = [
+        (x, y),
+        (x + width, y),
+        (x, y + height),
+        (x + width, y + height)
+    ]
+    for cx, cy in corners:
+        draw.ellipse(
+            [cx - marker_radius, cy - marker_radius, cx + marker_radius, cy + marker_radius],
+            fill=(255, 0, 0, 255)
+        )
+    
+    # Add "REGION OF INTEREST" text above the box
+    try:
+        # Try to use a larger font
+        font = ImageFont.truetype("arial.ttf", 24)
+    except:
+        # Fallback to default font
+        font = ImageFont.load_default()
+    
+    text = "REGION OF INTEREST"
+    text_y = max(0, y - 35)
+    draw.text((x, text_y), text, fill=(255, 0, 0, 255), font=font)
+    
+    # Save the annotated image
+    if output_path is None:
+        import tempfile
+        output_path = tempfile.mktemp(suffix='.png')
+    
+    # Convert to RGB if necessary (remove alpha for PNG compatibility with some viewers)
+    if img.mode == 'RGBA':
+        # Create a white background
+        background = Image.new('RGB', img.size, (255, 255, 255))
+        background.paste(img, mask=img.split()[3])  # Use alpha channel as mask
+        img = background
+    
+    img.save(output_path, 'PNG')
+    return output_path
+
+
+def query_image_region(
+    image_path: str,
+    bbox: dict,
+    question: str,
+    context: str = None,
+    system_prompt: str = "You are an expert medical imaging specialist. Focus your analysis on the region highlighted with the red bounding box in the image.",
+    max_tokens: int = 2048
+) -> dict:
+    """
+    Query the LLM about a specific region of an image.
+    
+    This function:
+    1. Annotates the image with a red bounding box at the specified region
+    2. Builds a prompt that tells the LLM to focus on the highlighted region
+    3. Sends the annotated image + prompt to the multimodal LLM
+    
+    Args:
+        image_path: Path to the original image
+        bbox: Dictionary with 'x', 'y', 'width', 'height' keys
+        question: The user's question about the region
+        context: Optional context (e.g., AI summary from report analysis)
+        system_prompt: System prompt for the LLM
+        max_tokens: Maximum tokens for response
+    
+    Returns:
+        dict with 'success', 'response' or 'error'
+    """
+    import tempfile
+    import shutil
+    from callables import predict_multimodal
+    
+    try:
+        # Create annotated image
+        temp_dir = tempfile.mkdtemp()
+        annotated_path = os.path.join(temp_dir, 'annotated_image.png')
+        annotate_image_with_bounding_box(image_path, bbox, annotated_path)
+        
+        # Build the prompt
+        context_part = ""
+        if context:
+            context_part = f"Context from the medical report analysis:\n{context}\n\n"
+        
+        full_prompt = (
+            f"{context_part}"
+            f"The following image is a medical scan with a RED BOUNDING BOX marking the region of interest. "
+            f"The user is asking about this specific highlighted region.\n\n"
+            f"User question: {question}\n\n"
+            f"Please analyze the highlighted region and answer the question."
+        )
+        
+        # Call multimodal prediction
+        result = predict_multimodal(
+            prompt=full_prompt,
+            image_paths=[annotated_path],
+            system_prompt=system_prompt,
+            max_tokens=max_tokens
+        )
+        
+        # Cleanup
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        
+        if result:
+            return {"success": True, "response": result}
+        else:
+            return {"success": False, "error": "No response from LLM"}
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 def main():

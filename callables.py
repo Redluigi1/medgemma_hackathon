@@ -205,4 +205,3 @@ def predict_multimodal(prompt: str, image_paths: list, system_prompt: str = "You
 # result = predict_multimodal("Summarize these reports.", images)
 # print(result)
 
-

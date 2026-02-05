@@ -14,9 +14,8 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Import the existing modules
-from medical_report_processor import MedicalReportProcessor
 from callables import predict_text_only, predict_multimodal, get_bounding_boxes
+from medical_report_processor import MedicalReportProcessor, query_image_region
 
 app = FastAPI(
     title="Medical Report Processor API",
@@ -265,6 +264,82 @@ async def get_bounding_boxes_endpoint(
             "success": True,
             "detections": result
         })
+        
+    except Exception as e:
+        return JSONResponse(content={
+            "success": False,
+            "error": str(e)
+        })
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@app.post("/query-image-region")
+async def query_image_region_endpoint(
+    image: UploadFile = File(...),
+    bbox_x: float = Form(...),
+    bbox_y: float = Form(...),
+    bbox_width: float = Form(...),
+    bbox_height: float = Form(...),
+    scale_x: float = Form(default=1.0),
+    scale_y: float = Form(default=1.0),
+    question: str = Form(...),
+    context: str = Form(default=""),
+    max_tokens: int = Form(default=2048)
+):
+    """
+    Query the LLM about a specific region of an image.
+    
+    This endpoint:
+    1. Receives the original image and bounding box coordinates
+    2. Annotates the image with a red bounding box on the backend
+    3. Sends the annotated image to the LLM with a prompt focusing on the region
+    
+    Args:
+        image: The original image file
+        bbox_x, bbox_y: Top-left corner of bounding box (in display pixels)
+        bbox_width, bbox_height: Size of bounding box (in display pixels)
+        scale_x, scale_y: Scale factors to convert display coords to natural image coords
+        question: The user's question about the selected region
+        context: Optional context (e.g., AI analysis summary)
+        max_tokens: Maximum tokens for response
+    """
+    # Create temp directory
+    temp_dir = tempfile.mkdtemp()
+    
+    try:
+        # Validate image type
+        if not image.content_type or not image.content_type.startswith('image/'):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type: {image.filename}. Only image files are accepted."
+            )
+        
+        # Save uploaded image
+        file_path = os.path.join(temp_dir, image.filename or "image.png")
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        
+        # Build bounding box dict
+        bbox = {
+            'x': bbox_x,
+            'y': bbox_y,
+            'width': bbox_width,
+            'height': bbox_height,
+            'scale_x': scale_x,
+            'scale_y': scale_y
+        }
+        
+        # Call the query function
+        result = query_image_region(
+            image_path=file_path,
+            bbox=bbox,
+            question=question,
+            context=context if context else None,
+            max_tokens=max_tokens
+        )
+        
+        return JSONResponse(content=result)
         
     except Exception as e:
         return JSONResponse(content={
