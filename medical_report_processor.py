@@ -450,6 +450,114 @@ Output ONLY the JSON object, no other text or markdown."""
         
         return parsed_data
     
+    def analyze_lab_value_deviations(self, tabular_report: dict, report_summary: str = None) -> dict:
+        """
+        Analyze lab report tables and add explanations for abnormal values.
+        Uses LLM to identify values outside reference ranges and explain their significance.
+        
+        Args:
+            tabular_report: A tabular report dict containing tables with lab data
+            report_summary: The report summary text to provide context
+            
+        Returns:
+            Updated tabular_report with 'value_explanations' field added to each table
+        """
+        # Only process lab reports
+        if tabular_report.get("page_type") != "lab_report":
+            return tabular_report
+        
+        tables = tabular_report.get("tables", [])
+        if not tables:
+            return tabular_report
+        
+        self.logger.logger.info(f"Analyzing lab value deviations for {len(tables)} table(s)...")
+        
+        # Build context
+        context_section = ""
+        if report_summary:
+            context_section = f"""
+PATIENT CONTEXT (from medical report summary):
+{report_summary}
+"""
+        
+        # Process each table
+        for table_idx, table in enumerate(tables):
+            table_name = table.get("table_name", f"Table {table_idx + 1}")
+            columns = table.get("columns", [])
+            rows = table.get("rows", [])
+            
+            if not rows or not columns:
+                continue
+            
+            # Format table data for LLM
+            table_text = f"Table: {table_name}\n"
+            table_text += "Columns: " + " | ".join(columns) + "\n"
+            table_text += "Rows:\n"
+            for row_idx, row in enumerate(rows):
+                table_text += f"  Row {row_idx}: " + " | ".join(str(cell) for cell in row) + "\n"
+            
+            prompt = f"""You are a medical lab analyst. Analyze this lab report table and identify ANY values that are ABNORMAL (outside the reference range - either HIGH or LOW).
+{context_section}
+LAB DATA:
+{table_text}
+
+TASK: For each abnormal value, provide a brief patient-friendly explanation of:
+1. Whether the value is HIGH or LOW
+2. What this means for the patient's health (potential causes or implications)
+3. Keep explanations concise (2-3 sentences max)
+
+OUTPUT FORMAT - Return ONLY valid JSON:
+{{
+    "explanations": {{
+        "row_index": {{
+            "test_name": "Name of the test",
+            "status": "High" or "Low",
+            "value": "The actual value",
+            "reference_range": "The reference range if available",
+            "explanation": "Brief patient-friendly explanation"
+        }}
+    }}
+}}
+
+If ALL values are normal, return: {{"explanations": {{}}}}
+
+IMPORTANT:
+- Only include rows with ABNORMAL values
+- Use row indices as keys (0-indexed)
+- Output ONLY the JSON object, no other text"""
+
+            response = self._call_llm_with_logging(
+                prompt=prompt,
+                image_paths=None,  # Text-only call
+                function_name="analyze_lab_value_deviations",
+                system_prompt="You are a medical lab analyst. Identify abnormal lab values and provide brief, accurate explanations. Output ONLY valid JSON."
+            )
+            
+            expected_schema = """{
+    "explanations": {
+        "row_index": {
+            "test_name": "string",
+            "status": "High or Low",
+            "value": "string",
+            "reference_range": "string or null",
+            "explanation": "string"
+        }
+    }
+}"""
+            
+            parsed_result = self._parse_json_from_llm_response(response, "analyze_lab_value_deviations", expected_schema)
+            
+            # Add explanations to the table
+            if "explanations" in parsed_result and parsed_result["explanations"]:
+                table["value_explanations"] = parsed_result["explanations"]
+                num_abnormal = len(parsed_result["explanations"])
+                self.logger.logger.info(f"Found {num_abnormal} abnormal value(s) in {table_name}")
+            else:
+                table["value_explanations"] = {}
+                self.logger.logger.info(f"All values normal in {table_name}")
+        
+        return tabular_report
+    
     def confirm_medical_image(self, image_path: str) -> bool:
         """
         Confirm if a cropped sub-image is indeed a medical image.
@@ -473,15 +581,17 @@ Answer with ONLY 'YES' or 'NO'. Answer 'NO' if the image is not a medical diagno
         return "YES" in response.upper()
     
     def describe_medical_image(self, image_path: str, is_full_page: bool = False, 
-                                page_image_path: str = None) -> dict:
+                                page_image_path: str = None, max_retries: int = 2) -> dict:
         """
         Get a patient-friendly description and caption of a medical image.
         Uses the detailed summary as context, and for sub-images also uses the full page.
+        Uses JSON output format for robust parsing with retry logic.
         
         Args:
             image_path: Path to the medical image
             is_full_page: Whether this is a full-page scan (or sub-image)
             page_image_path: Path to the original PDF page (for sub-image context)
+            max_retries: Maximum number of retries if JSON parsing fails
             
         Returns:
             Dict with 'caption' and 'description' keys
@@ -494,84 +604,80 @@ Answer with ONLY 'YES' or 'NO'. Answer 'NO' if the image is not a medical diagno
         
         prompt = f"""You are explaining this medical image to a patient.
 {context_section}
-Based on the image and the context above, provide ONLY the following two things:
+Based on the image and the context above, provide the following:
 
-1. CAPTION: A very short image caption (maximum 8 words).
+1. caption: A very short image caption (maximum 8 words).
+2. description: A detailed patient-friendly explanation (3-5 sentences) that identifies the scan type, body part shown, and what the image shows related to the patient's condition. Use simple language.
 
-2. DESCRIPTION: A detailed patient-friendly explanation  that identifies the scan type, body part shown, and what the image shows related to the patient's condition. Use simple language.
+CRITICAL: Output ONLY valid JSON in this EXACT format:
+{{
+    "caption": "Your caption here (max 8 words)",
+    "description": "Your detailed patient-friendly description here (3-5 sentences)."
+}}
 
-CRITICAL: Output ONLY the caption and description text below. Do NOT include any thinking process, instructions, or meta-commentary. Just provide the actual content that will be shown to the patient.
-
-Format your response EXACTLY as:
-CAPTION: [your actual caption text here - max 8 words]
-DESCRIPTION: [your actual description text here - 3-5 sentences for the patient to read]"""
+Do NOT include any thinking process, instructions, meta-commentary, or text outside the JSON object."""
 
         # For sub-images, include the full page as additional context
         image_paths = [image_path]
         if not is_full_page and page_image_path:
             image_paths.append(page_image_path)
         
-        response = self._call_llm_with_logging(
-            prompt=prompt,
-            image_paths=image_paths,
-            function_name="describe_medical_image",
-            system_prompt="You are a medical professional. Provide ONLY the requested caption and description. Do not include thinking process or instructions."
-        )
+        expected_schema = """{
+    "caption": "string (max 8 words)",
+    "description": "string (3-5 sentences, patient-friendly)"
+}"""
         
-        # Clean response: remove thinking tokens and extract clean text
-        cleaned_response = response
-        
-        # Remove thinking tokens (like <unused94>thought, <|thinking|>, etc.)
-        cleaned_response = re.sub(r'<unused\d+>.*?(?=CAPTION:|DESCRIPTION:|$)', '', cleaned_response, flags=re.DOTALL)
-        cleaned_response = re.sub(r'<\|thinking\|>.*?<\|/thinking\|>', '', cleaned_response, flags=re.DOTALL)
-        cleaned_response = re.sub(r'\*\*thought.*?(?=CAPTION:|DESCRIPTION:|$)', '', cleaned_response, flags=re.DOTALL | re.IGNORECASE)
-        
-        # Parse caption and description from response
-        caption = ""
-        description = ""
-        
-        if "CAPTION:" in cleaned_response and "DESCRIPTION:" in cleaned_response:
-            # Extract caption
-            caption_match = re.search(r'CAPTION:\s*(.+?)(?=DESCRIPTION:|$)', cleaned_response, re.DOTALL)
-            if caption_match:
-                caption = caption_match.group(1).strip()
-                # Remove any asterisks, bullet points, or formatting
-                caption = re.sub(r'^\*+\s*', '', caption)
-                caption = re.sub(r'\*+$', '', caption)
-                # Take only the first line if multi-line
-                caption = caption.split('\n')[0].strip()
+        # Retry loop for robust parsing
+        for attempt in range(max_retries + 1):
+            response = self._call_llm_with_logging(
+                prompt=prompt,
+                image_paths=image_paths,
+                function_name="describe_medical_image",
+                system_prompt="You are a medical professional. Output ONLY valid JSON with the requested caption and description. Do not include any text outside the JSON object."
+            )
             
-            # Extract description
-            desc_match = re.search(r'DESCRIPTION:\s*(.+?)$', cleaned_response, re.DOTALL)
-            if desc_match:
-                description = desc_match.group(1).strip()
-                # Remove any leading asterisks or formatting
-                description = re.sub(r'^\*+\s*', '', description)
-                description = re.sub(r'\*+$', '', description)
-                # Remove any meta-instructions that might have slipped through
-                # Look for sentences that are instructions rather than content
-                sentences = description.split('.')
-                clean_sentences = []
-                for sent in sentences:
-                    sent = sent.strip()
-                    # Skip sentences that look like instructions
-                    if sent and not any(phrase in sent.lower() for phrase in [
-                        'avoid', 'uses simple', 'stick with', 'combine into', 
-                        'check if', 'review and', 'formulate the', 'identify the'
-                    ]):
-                        clean_sentences.append(sent)
-                if clean_sentences:
-                    description = '. '.join(clean_sentences)
-                    if not description.endswith('.'):
+            # Parse JSON response
+            parsed_result = self._parse_json_from_llm_response(
+                response, 
+                "describe_medical_image", 
+                expected_schema
+            )
+            
+            # Check if parsing was successful
+            if "error" not in parsed_result:
+                # Validate that we have both required fields
+                caption = parsed_result.get("caption", "").strip()
+                description = parsed_result.get("description", "").strip()
+                
+                if caption and description:
+                    # Clean up the caption (ensure max 8 words)
+                    caption_words = caption.split()
+                    if len(caption_words) > 8:
+                        caption = ' '.join(caption_words[:8])
+                    
+                    # Ensure description ends with a period
+                    if description and not description.endswith('.'):
                         description += '.'
-        else:
-            # Fallback: use the whole response if format not followed
-            self.logger.logger.warning("Image description response didn't follow expected format")
-            description = cleaned_response
+                    
+                    self.logger.logger.info(f"Successfully parsed image description (attempt {attempt + 1})")
+                    return {
+                        "caption": caption,
+                        "description": description
+                    }
+                else:
+                    self.logger.logger.warning(f"Parsed JSON missing required fields (attempt {attempt + 1})")
+            else:
+                self.logger.logger.warning(f"JSON parsing failed (attempt {attempt + 1}): {parsed_result.get('error', 'Unknown error')}")
+            
+            # If not the last attempt, log retry
+            if attempt < max_retries:
+                self.logger.logger.info(f"Retrying describe_medical_image (attempt {attempt + 2}/{max_retries + 1})...")
         
+        # All retries failed - return fallback with error info
+        self.logger.logger.error("All attempts to parse image description failed, returning fallback")
         return {
-            "caption": caption,
-            "description": description
+            "caption": "Medical scan image",
+            "description": "This is a medical diagnostic image. Please consult with your healthcare provider for a detailed explanation of what this image shows."
         }
     
     def extract_sub_images(self, image_path: str, detections: list, source_pdf: str, page_num: int) -> list:
@@ -1063,7 +1169,7 @@ TASK: Find and extract ONLY the patient's personal details and doctor's contact 
 
 WHAT TO EXTRACT:
 - patient_info.name: The PATIENT's full name (the person receiving medical care)
-- patient_info.age: The patient's age in years
+- patient_info.age: The patient's age in years 
 - patient_info.sex: Male, Female, or Other
 - doctor_info.name: The DOCTOR's name (usually has "Dr." prefix)
 - doctor_info.phone: Doctor's phone number
@@ -1532,7 +1638,26 @@ Respond with ONLY this JSON (no other text):
         # Step 4: Extract structured data (uses first pages only for patient/doctor info)
         self.extract_all_structured_data(all_page_images, first_page_images)
         
-        # Step 5: Save outputs
+        # Step 5: Analyze lab value deviations and add explanations
+        # Use report_summary as context for the LLM
+        report_summary_text = None
+        if self.report_data.get("report_summary"):
+            rs = self.report_data["report_summary"]
+            # Combine relevant summary fields for context
+            summary_parts = []
+            if rs.get("main_findings"):
+                summary_parts.append(f"Main findings: {rs['main_findings']}")
+            if rs.get("diagnosis"):
+                summary_parts.append(f"Diagnosis: {rs['diagnosis']}")
+            if rs.get("patient_explanation"):
+                summary_parts.append(f"Overview: {rs['patient_explanation']}")
+            report_summary_text = "\n".join(summary_parts) if summary_parts else None
+        
+        self.logger.logger.info(f"Analyzing {len(self.tabular_reports)} tabular report(s) for abnormal lab values...")
+        for tabular_report in self.tabular_reports:
+            self.analyze_lab_value_deviations(tabular_report, report_summary_text)
+        
+        # Step 6: Save outputs
         report_path = self.output_dir / "report_data.json"
         gallery_path = self.output_dir / "image_gallery.json"
         tabular_path = self.output_dir / "tabular_reports.json"
@@ -1581,7 +1706,7 @@ def main():
         base_dir = Path(__file__).parent
     
         pdf_paths = [str(base_dir / "typhoid.pdf")]
-        # pdf_paths = [str(base_dir / "docs.pdf"), str(base_dir / "blood.pdf")]
+        pdf_paths = [str(base_dir / "docs.pdf"), str(base_dir / "blood.pdf")]
     
     # Check if PDFs exist
     for pdf_path in pdf_paths:
