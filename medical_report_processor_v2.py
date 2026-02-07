@@ -1,11 +1,14 @@
 """
-Medical Report PDF Processor
+Medical Report PDF Processor V2 - Parallel API Calls
 Converts PDFs to images, extracts medical images and structured data, outputs to JSON.
+This version uses asyncio and ThreadPoolExecutor for parallel API calls.
 """
 
 import os
 import json
 import time
+import asyncio
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
@@ -23,16 +26,20 @@ except ImportError:
 from callables import get_bounding_boxes, predict_text_only, predict_multimodal
 from llm_logger import get_logger, LLMLogger
 
+# Default max workers for parallel API calls
+DEFAULT_MAX_WORKERS = 4
+
 
 class MedicalReportProcessor:
-    """Main class to process medical PDFs and extract structured data."""
+    """Main class to process medical PDFs and extract structured data with parallel API calls."""
     
-    def __init__(self, output_dir: str = None):
+    def __init__(self, output_dir: str = None, max_workers: int = DEFAULT_MAX_WORKERS):
         """
         Initialize the processor.
         
         Args:
             output_dir: Directory to save output files and images
+            max_workers: Maximum number of parallel API calls (default: 4)
         """
         if output_dir is None:
             output_dir = Path(__file__).parent / "output"
@@ -54,6 +61,12 @@ class MedicalReportProcessor:
         self.detailed_summary = ""  # Extracted first, used as context for image descriptions
         self.tabular_reports = []  # Store extracted tabular data from report pages
         self.page_image_map = {}  # Maps page_num to image_path for context
+        
+        # Parallel processing settings
+        self.max_workers = max_workers
+        self._lock = asyncio.Lock() if asyncio.get_event_loop().is_running() else None
+        import threading
+        self._thread_lock = threading.Lock()  # Thread-safe lock for concurrent access
     
     # ==================== PDF TO IMAGE CONVERSION ====================
     
@@ -737,6 +750,8 @@ Do NOT include any thinking process, instructions, meta-commentary, or text outs
         """
         self.logger.logger.info(f"Processing page {page_num} for medical images...")
         
+        page_results = {"page_num": page_num, "medical_images": [], "tabular_data": None}
+        
         # Store page image path for context when describing sub-images
         self.page_image_map[page_num] = image_path
         
@@ -794,6 +809,113 @@ Do NOT include any thinking process, instructions, meta-commentary, or text outs
                 self.logger.logger.info(f"Page {page_num}: No medical images detected by CNN")
         except Exception as e:
             self.logger.logger.error(f"Error running CNN on page {page_num}: {e}")
+        
+        return page_results
+    
+    def _process_single_crop(self, crop_path: str, image_path: str, source_pdf: str, page_num: int) -> dict:
+        """
+        Process a single cropped image - confirm and describe if medical.
+        Thread-safe helper for parallel processing.
+        
+        Returns:
+            Dict with image info if confirmed as medical, None otherwise
+        """
+        try:
+            if self.confirm_medical_image(crop_path):
+                desc_result = self.describe_medical_image(
+                    crop_path, 
+                    is_full_page=False, 
+                    page_image_path=image_path
+                )
+                return {
+                    "image_path": crop_path,
+                    "type": "extracted_image",
+                    "source_pdf": source_pdf,
+                    "page_number": page_num,
+                    "caption": desc_result["caption"],
+                    "description": desc_result["description"]
+                }
+            else:
+                self.logger.logger.info(f"Cropped image not confirmed as medical: {crop_path}")
+                os.remove(crop_path)
+                return None
+        except Exception as e:
+            self.logger.logger.error(f"Error processing crop {crop_path}: {e}")
+            return None
+    
+    def process_page_for_medical_images_parallel(self, image_path: str, source_pdf: str, page_num: int) -> dict:
+        """
+        Process a single PDF page for medical images AND structured reports.
+        PARALLEL VERSION: Uses ThreadPoolExecutor for concurrent crop processing.
+        
+        Logic:
+        1. Run CNN (YOLO) on every page to detect potential medical images
+        2. Confirm each detected region with LLM using confirm_medical_image IN PARALLEL
+        3. If structured report -> extract tabular data with specialized agent
+        
+        Args:
+            image_path: Path to the PDF page image
+            source_pdf: Name of source PDF
+            page_num: Page number
+            
+        Returns:
+            Dict with page processing results
+        """
+        self.logger.logger.info(f"[PARALLEL] Processing page {page_num} for medical images...")
+        
+        page_results = {"page_num": page_num, "medical_images": [], "tabular_data": None}
+        
+        # Store page image path for context when describing sub-images
+        with self._thread_lock:
+            self.page_image_map[page_num] = image_path
+        
+        # === TWO-STAGE REPORT PROCESSING ===
+        # Stage 1: Classify if this is a structured report page
+        report_classification = self.is_report_page(image_path)
+        
+        if report_classification["is_report"]:
+            # Stage 2: Extract tabular data using specialized agent
+            self.logger.logger.info(f"Page {page_num}: Classified as {report_classification['report_type']} (confidence: {report_classification['confidence']})")
+            tabular_data = self.extract_report_tabular_data(
+                image_path, 
+                report_classification["report_type"], 
+                source_pdf, 
+                page_num
+            )
+            page_results["tabular_data"] = tabular_data
+        
+        # === MEDICAL IMAGE PROCESSING (PARALLEL) ===
+        self.logger.logger.info(f"Page {page_num}: Running CNN to detect medical images...")
+        
+        try:
+            detections = get_bounding_boxes(image_path)
+            self.logger.logger.info(f"Found {len(detections)} potential medical image regions")
+            
+            if detections:
+                cropped_paths = self.extract_sub_images(image_path, detections, source_pdf, page_num)
+                
+                # Process all crops in parallel
+                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                    futures = {
+                        executor.submit(
+                            self._process_single_crop, 
+                            crop_path, image_path, source_pdf, page_num
+                        ): crop_path 
+                        for crop_path in cropped_paths
+                    }
+                    
+                    for future in as_completed(futures):
+                        result = future.result()
+                        if result:
+                            page_results["medical_images"].append(result)
+                            with self._thread_lock:
+                                self.image_gallery["medical_images"].append(result)
+            else:
+                self.logger.logger.info(f"Page {page_num}: No medical images detected by CNN")
+        except Exception as e:
+            self.logger.logger.error(f"Error running CNN on page {page_num}: {e}")
+        
+        return page_results
     
     # ==================== STRUCTURED DATA EXTRACTION ====================
     
@@ -1598,6 +1720,91 @@ Respond with ONLY this JSON (no other text):
         
         self.logger.logger.info("Structured data extraction complete")
     
+    def extract_all_structured_data_parallel(self, image_paths: list, first_page_images: list = None):
+        """
+        Extract all structured data from PDF using PARALLEL API calls.
+        
+        This version runs independent extractions concurrently:
+        - Patient/doctor info extraction (from ALL page images)
+        - Patient history extraction (from detailed_summary)
+        - Medications extraction (from detailed_summary)
+        - Report summary extraction
+        
+        Args:
+            image_paths: List of paths to PDF page images
+            first_page_images: Optional list of first page images from each PDF (deprecated, now uses all images)
+        """
+        self.logger.logger.info("[PARALLEL] Starting parallel structured data extraction...")
+        
+        # Use ALL images for patient/doctor info extraction (not just first page)
+        # This provides more comprehensive extraction from multi-page reports
+        
+        # Define extraction tasks
+        def extract_patient_doctor():
+            result = self.extract_patient_and_doctor_info(image_paths)
+            # Retry once if patient name is null
+            patient_info = result.get("patient_info", {})
+            if patient_info is None or patient_info.get("name") is None:
+                self.logger.logger.info("[PARALLEL] Patient name null, retrying...")
+                result = self.extract_patient_and_doctor_info(image_paths)
+            return ("patient_doctor", result)
+        
+        def extract_history():
+            if self.detailed_summary:
+                return ("history", self.extract_patient_history_from_text(self.detailed_summary))
+            return ("history", {"patient_history": None})
+        
+        def extract_meds():
+            if self.detailed_summary:
+                return ("meds", self.extract_medications_and_appointments_from_text(self.detailed_summary))
+            return ("meds", self.extract_medications_and_appointments(image_paths))
+        
+        def extract_summary():
+            return ("summary", self.extract_report_summary(image_paths))
+        
+        # Run all extractions in parallel
+        results = {}
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = [
+                executor.submit(extract_patient_doctor),
+                executor.submit(extract_history),
+                executor.submit(extract_meds),
+                executor.submit(extract_summary)
+            ]
+            
+            for future in as_completed(futures):
+                try:
+                    key, value = future.result()
+                    results[key] = value
+                    self.logger.logger.info(f"[PARALLEL] Completed extraction: {key}")
+                except Exception as e:
+                    self.logger.logger.error(f"[PARALLEL] Extraction failed: {e}")
+        
+        # Merge results
+        patient_doctor_data = results.get("patient_doctor", {})
+        patient_history_data = results.get("history", {})
+        meds_data = results.get("meds", {})
+        summary_data = results.get("summary", {})
+        
+        self.report_data = {
+            "patient_info": patient_doctor_data.get("patient_info", None),
+            "doctor_info": patient_doctor_data.get("doctor_info", None),
+            "patient_history": patient_history_data.get("patient_history", None),
+            "report_summary": summary_data.get("report_summary", None),
+            "medications": meds_data.get("medications", []),
+            "next_appointment": meds_data.get("next_appointment", None)
+        }
+        
+        # Log errors
+        for name, data in [("patient_doctor_info", patient_doctor_data), 
+                           ("report_summary", summary_data), 
+                           ("medications", meds_data)]:
+            if "error" in data:
+                self.logger.logger.warning(f"Error in {name}: {data.get('error')}")
+                self.report_data.setdefault("extraction_errors", {})[name] = data.get("error")
+        
+        self.logger.logger.info("[PARALLEL] Structured data extraction complete")
+    
     # ==================== MAIN PIPELINE ====================
     
     def process_pdfs(self, pdf_paths: list) -> dict:
@@ -1692,7 +1899,137 @@ Respond with ONLY this JSON (no other text):
             "tabular_reports": self.tabular_reports,
             "llm_summary": summary
         }
-
+    
+    def analyze_lab_value_deviations_parallel(self, report_summary: str = None):
+        """
+        Analyze all lab reports for deviations IN PARALLEL.
+        
+        Args:
+            report_summary: Report summary text for context
+        """
+        lab_reports = [r for r in self.tabular_reports if r.get("page_type") == "lab_report"]
+        
+        if not lab_reports:
+            return
+        
+        self.logger.logger.info(f"[PARALLEL] Analyzing {len(lab_reports)} lab report(s) for deviations...")
+        
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {
+                executor.submit(self.analyze_lab_value_deviations, report, report_summary): report
+                for report in lab_reports
+            }
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as e:
+                    self.logger.logger.error(f"[PARALLEL] Lab analysis failed: {e}")
+    
+    def process_pdfs_parallel(self, pdf_paths: list) -> dict:
+        """
+        Main pipeline to process multiple PDFs with PARALLEL API calls.
+        
+        Parallelization points:
+        1. Pages processed in parallel (each page independently)
+        2. Structured data extractions run in parallel
+        3. Lab value deviation analysis runs in parallel
+        
+        Args:
+            pdf_paths: List of paths to PDF files
+            
+        Returns:
+            Dictionary with report_data and image_gallery paths
+        """
+        self.logger.logger.info(f"[PARALLEL] Starting parallel processing of {len(pdf_paths)} PDF(s)...")
+        
+        all_page_images = []
+        first_page_images = []
+        page_tasks = []  # List of (image_path, pdf_name, page_num)
+        
+        # Step 1: Convert all PDFs to images first (sequential - I/O bound)
+        for pdf_path in pdf_paths:
+            self.logger.logger.info(f"Converting PDF: {pdf_path}")
+            pdf_name = Path(pdf_path).stem
+            page_images = self.convert_pdf_to_images(pdf_path)
+            all_page_images.extend(page_images)
+            
+            if page_images:
+                first_page_images.append(page_images[0])
+            
+            for i, img_path in enumerate(page_images):
+                page_tasks.append((img_path, pdf_name, i + 1))
+        
+        # Step 2: Extract detailed summary FIRST (needs to complete before image descriptions)
+        self.extract_detailed_summary(all_page_images)
+        
+        # Step 3: Process all pages for medical images IN PARALLEL
+        self.logger.logger.info(f"[PARALLEL] Processing {len(page_tasks)} pages in parallel...")
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {
+                executor.submit(
+                    self.process_page_for_medical_images_parallel,
+                    img_path, pdf_name, page_num
+                ): (pdf_name, page_num)
+                for img_path, pdf_name, page_num in page_tasks
+            }
+            for future in as_completed(futures):
+                pdf_name, page_num = futures[future]
+                try:
+                    result = future.result()
+                    self.logger.logger.info(f"[PARALLEL] Completed page {page_num} of {pdf_name}")
+                except Exception as e:
+                    self.logger.logger.error(f"[PARALLEL] Failed page {page_num} of {pdf_name}: {e}")
+        
+        # Step 4: Extract structured data IN PARALLEL
+        self.extract_all_structured_data_parallel(all_page_images, first_page_images)
+        
+        # Step 5: Analyze lab value deviations IN PARALLEL
+        report_summary_text = None
+        if self.report_data.get("report_summary"):
+            rs = self.report_data["report_summary"]
+            summary_parts = []
+            if rs.get("main_findings"):
+                summary_parts.append(f"Main findings: {rs['main_findings']}")
+            if rs.get("diagnosis"):
+                summary_parts.append(f"Diagnosis: {rs['diagnosis']}")
+            if rs.get("patient_explanation"):
+                summary_parts.append(f"Overview: {rs['patient_explanation']}")
+            report_summary_text = "\n".join(summary_parts) if summary_parts else None
+        
+        self.analyze_lab_value_deviations_parallel(report_summary_text)
+        
+        # Step 6: Save outputs
+        report_path = self.output_dir / "report_data.json"
+        gallery_path = self.output_dir / "image_gallery.json"
+        tabular_path = self.output_dir / "tabular_reports.json"
+        
+        with open(report_path, 'w', encoding='utf-8') as f:
+            json.dump(self.report_data, f, indent=2, ensure_ascii=False)
+        
+        self.image_gallery["detailed_summary"] = self.detailed_summary
+        
+        with open(gallery_path, 'w', encoding='utf-8') as f:
+            json.dump(self.image_gallery, f, indent=2, ensure_ascii=False)
+        
+        with open(tabular_path, 'w', encoding='utf-8') as f:
+            json.dump({"tabular_reports": self.tabular_reports}, f, indent=2, ensure_ascii=False)
+        
+        self.logger.logger.info(f"Report data saved to: {report_path}")
+        self.logger.logger.info(f"Image gallery saved to: {gallery_path}")
+        self.logger.logger.info(f"Tabular reports saved to: {tabular_path}")
+        
+        summary = self.logger.get_summary()
+        self.logger.logger.info(f"[PARALLEL] Processing complete! LLM call summary: {summary}")
+        
+        return {
+            "report_data_path": str(report_path),
+            "image_gallery_path": str(gallery_path),
+            "tabular_reports_path": str(tabular_path),
+            "report_data": self.report_data,
+            "image_gallery": self.image_gallery,
+            "tabular_reports": self.tabular_reports,
+            "llm_summary": summary
+        }
 
 # ==================== IMAGE REGION QUERY FUNCTIONS ====================
 
@@ -1855,18 +2192,21 @@ def query_image_region(
 
 
 def main():
-    """Example usage of the processor."""
+    """Example usage of the processor with parallel API calls."""
     import sys
     
+    # Check for --sequential flag
+    use_parallel = "--sequential" not in sys.argv
+    args = [arg for arg in sys.argv[1:] if arg != "--sequential"]
+    
     # Get PDF paths from command line or use default
-    if len(sys.argv) > 1:
-        pdf_paths = sys.argv[1:]
+    if args:
+        pdf_paths = args
     else:
         # Default to example.pdf in the same directory
         base_dir = Path(__file__).parent
-    
-        pdf_paths = [str(base_dir / "typhoid.pdf")]
         pdf_paths = [str(base_dir / "docs.pdf"), str(base_dir / "blood.pdf")]
+        pdf_paths = [str(base_dir / "dengue.pdf")]
     
     # Check if PDFs exist
     for pdf_path in pdf_paths:
@@ -1874,14 +2214,19 @@ def main():
             print(f"ERROR: PDF not found: {pdf_path}")
             return
     
-    print(f"Processing {len(pdf_paths)} PDF(s)...")
+    mode = "PARALLEL" if use_parallel else "SEQUENTIAL"
+    print(f"Processing {len(pdf_paths)} PDF(s) in {mode} mode...")
     
     # Create processor and run
     processor = MedicalReportProcessor()
-    result = processor.process_pdfs(pdf_paths)
+    
+    if use_parallel:
+        result = processor.process_pdfs_parallel(pdf_paths)
+    else:
+        result = processor.process_pdfs(pdf_paths)
     
     print("\n" + "="*50)
-    print("PROCESSING COMPLETE")
+    print(f"PROCESSING COMPLETE ({mode})")
     print("="*50)
     print(f"Report data: {result['report_data_path']}")
     print(f"Image gallery: {result['image_gallery_path']}")

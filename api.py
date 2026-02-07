@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from callables import predict_text_only, predict_multimodal, get_bounding_boxes
-from medical_report_processor import MedicalReportProcessor, query_image_region
+from medical_report_processor_v2 import MedicalReportProcessor, query_image_region
 
 app = FastAPI(
     title="Medical Report Processor API",
