@@ -4,6 +4,12 @@
 
 ---
 
+## Demo
+
+https://github.com/user-attachments/assets/demo.mp4
+
+---
+
 ## Features
 
 ### Core Capabilities
@@ -140,7 +146,7 @@ MARS/
 ├── docker-compose.yml          # Docker Compose setup
 │
 ├── fine_tune_yolo/             # YOLO model training
-│   └── runs/detect/train4/weights/best.pt  # Fine-tuned weights
+│   └── runs/detect/train/weights/best.pt  # Fine-tuned weights
 │
 └── website/                    # React frontend (Vite)
     ├── src/
