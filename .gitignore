@@ -17,16 +17,8 @@ logs/
 *.pdf
 
 # YOLO training files (large) - ignore all except trained weights
-fine_tune_yolo/
-!fine_tune_yolo/runs/
-fine_tune_yolo/runs/*
-!fine_tune_yolo/runs/detect/
-fine_tune_yolo/runs/detect/*
-!fine_tune_yolo/runs/detect/train/
-fine_tune_yolo/runs/detect/train/*
-!fine_tune_yolo/runs/detect/train/weights/
-fine_tune_yolo/runs/detect/train/weights/*
-!fine_tune_yolo/runs/detect/train/weights/best.pt
+
+
 
 # Frontend build artifacts (but keep source)
 website/node_modules/
