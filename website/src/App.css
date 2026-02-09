@@ -23,6 +23,15 @@ body {
   font-family: 'Manrope', sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+body::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 h1,
