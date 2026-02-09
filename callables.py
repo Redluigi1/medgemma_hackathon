@@ -31,7 +31,7 @@ def get_bounding_boxes(image_path, confidence_threshold=0.0, filter_overlapping=
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Construct the path relative to the script location
-    model_path = os.path.join(base_dir, 'fine_tune_yolo/runs/detect/train4/weights/best.pt')
+    model_path = os.path.join(base_dir, 'fine_tune_yolo/runs/detect/train/weights/best.pt')
     # Load the model
     model = YOLO(model_path)
     
