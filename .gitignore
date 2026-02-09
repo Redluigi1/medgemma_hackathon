@@ -1,7 +1,40 @@
-*.pdf
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+*.egg
+
+# Environment
 .env
 key.json
-__pycache__/
-fine_tune_yolo/
-website/
+
+# Output directories
 output/
+logs/
+
+# PDF test files
+*.pdf
+
+# YOLO training files (large)
+
+fine_tune_yolo/
+
+# Frontend build artifacts (but keep source)
+website/node_modules/
+website/dist/
+website/dist-ssr/
+website/*.local
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
