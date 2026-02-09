@@ -31,15 +31,7 @@ MARS uses **7 specialized MedGemma agents** orchestrated for different tasks:
 
 ---
 
-## Custom YOLO Dataset
 
-The YOLO model used in MARS was **manually created and annotated** specifically for this project:
-
-- **300 medical report images** manually collected and annotated
-- Trained to detect X-rays, CT scans, MRIs, ultrasounds embedded in PDF documents
-- Dataset and training details available at: [github.com/Redluigi1/medical_image_bounding_box_dataset](https://github.com/Redluigi1/medical_image_bounding_box_dataset)
-
----
 
 ## Processing Pipeline
 
@@ -250,11 +242,7 @@ npm run dev
 
 Access the app at: `http://localhost:5173`
 
-### Option B: Docker Compose
 
-```bash
-docker compose up --build
-```
 
 ---
 
