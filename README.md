@@ -6,7 +6,8 @@
 
 ## Demo
 
-https://github.com/user-attachments/assets/demo.mp4
+<video src="demo.mp4" controls="controls" width="100%">
+</video>
 
 ---
 
