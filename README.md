@@ -56,48 +56,48 @@ flowchart TB
     end
 
     subgraph Step1["STEP 1: Preprocessing"]
-        PDF2IMG["convert_pdf_to_images()<br/>PDF to PNG images"]
+        PDF2IMG["PDF to PNG Converter<br/><i>Converts each page to an image</i>"]
     end
 
     subgraph Step2["STEP 2: Extract Context First"]
-        DETAILED["extract_detailed_summary()<br/>self.detailed_summary"]
+        DETAILED["Report Summarizer Agent<br/><i>Generates a detailed text summary<br/>of the entire report</i>"]
         style DETAILED fill:#fff3cd,stroke:#ffc107
     end
 
     subgraph Step3["STEP 3: Per-Page Processing"]
         direction TB
-        PAGECLASSIFY["is_report_page()"]
+        PAGECLASSIFY["Page Classifier Agent<br/><i>Classifies each page as<br/>lab report, prescription, imaging, etc.</i>"]
         
-        PAGECLASSIFY -->|"is_report=true"| TABULAR["extract_report_tabular_data()<br/>self.tabular_reports[]"]
+        PAGECLASSIFY -->|"Lab/Report Page"| TABULAR["Tabular Extractor Agent<br/><i>Extracts structured tables<br/>from report pages</i>"]
         
-        YOLO["get_bounding_boxes()<br/>YOLO Detection"]
-        YOLO --> CROP["extract_sub_images()<br/>Crop detected regions"]
-        CROP --> CONFIRM["confirm_medical_image()"]
-        CONFIRM -->|"Confirmed"| DESCRIBE["describe_medical_image()"]
+        YOLO["Medical Image Detector<br/><i>Fine-tuned YOLO v8 model detects<br/>embedded X-rays, CT scans, MRIs</i>"]
+        YOLO --> CROP["Sub-Image Extractor<br/><i>Crops detected regions<br/>from the page</i>"]
+        CROP --> CONFIRM["Image Confirmation Agent<br/><i>Verifies cropped region is<br/>a valid medical image</i>"]
+        CONFIRM -->|"Confirmed"| DESCRIBE["Image Describer Agent<br/><i>Generates patient-friendly<br/>description of the scan</i>"]
     end
 
     subgraph Step4["STEP 4: Structured Data Extraction"]
         direction TB
-        PATDOC["extract_patient_and_doctor_info()<br/>patient_info, doctor_info"]
-        HISTORY["extract_patient_history_from_text()"]
-        MEDS["extract_medications_and_appointments_from_text()"]
-        SUMMARY["extract_report_summary()<br/>report_summary"]
+        PATDOC["Patient & Doctor<br/>Info Extractor<br/><i>Extracts names, age, contact details</i>"]
+        HISTORY["Patient History Extractor<br/><i>Extracts medical history<br/>from the summary text</i>"]
+        MEDS["Medications & Appointments<br/>Extractor<br/><i>Extracts prescribed drugs,<br/>dosages, follow-up dates</i>"]
+        SUMMARY["Report Summary Generator<br/><i>Creates a concise summary with<br/>findings, diagnosis, recommendations</i>"]
     end
 
     subgraph Step5["STEP 5: Lab Analysis"]
-        LABANALYZE["analyze_lab_value_deviations()<br/>value_explanations"]
+        LABANALYZE["Lab Value Analyzer Agent<br/><i>Identifies abnormal values and<br/>generates patient-friendly explanations</i>"]
     end
 
     subgraph Outputs["THREE JSON OUTPUTS"]
         direction LR
-        JSON1["report_data.json<br/>patient_info<br/>doctor_info<br/>patient_history<br/>report_summary<br/>medications<br/>next_appointment"]
+        JSON1["report_data.json<br/>patient_info | doctor_info<br/>patient_history | report_summary<br/>medications | next_appointment"]
         JSON2["image_gallery.json<br/>medical_images[]<br/>detailed_summary"]
-        JSON3["tabular_reports.json<br/>tables[]<br/>value_explanations<br/>metadata"]
+        JSON3["tabular_reports.json<br/>tables[]<br/>value_explanations"]
     end
 
     subgraph Interactive["INTERACTIVE - Runtime"]
-        REGION["query_image_region()<br/>User draws box on image"]
-        CHAT["predict_text_only()<br/>General Q&A"]
+        REGION["Region Query Agent<br/><i>User draws a bounding box on a scan<br/>and asks a specific question</i>"]
+        CHAT["Context-Aware Chat<br/><i>Ask follow-up questions<br/>about the entire report</i>"]
     end
 
     %% Main Flow
@@ -107,12 +107,12 @@ flowchart TB
     PDF2IMG --> YOLO
 
     %% Context: detailed_summary used by
-    DETAILED -.->|"context"| DESCRIBE
+    DETAILED -.->|"provides context"| DESCRIBE
     DETAILED -.->|"input text"| HISTORY
     DETAILED -.->|"input text"| MEDS
 
     %% Context: report_summary used by
-    SUMMARY -.->|"context"| LABANALYZE
+    SUMMARY -.->|"provides context"| LABANALYZE
 
     %% Tabular to Lab Analysis
     TABULAR --> LABANALYZE
