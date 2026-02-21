@@ -25,23 +25,57 @@ https://github.com/user-attachments/assets/b1408c1b-15eb-4198-adba-bd5a999829cb
 | Feature | Description |
 |---------|-------------|
 | **PDF Processing** | Upload multi-page medical PDFs (lab reports, X-rays, prescriptions, discharge summaries) |
-| **Medical Image Detection** | Custom fine-tuned YOLO v8 model detects and extracts embedded X-rays, CT scans, MRIs |
-| **Structured Data Extraction** | Extracts patient info, doctor info, diagnoses, medications, lab results |
-| **Lab Value Analysis** | Identifies abnormal values with patient-friendly explanations |
-| **Interactive Image Q&A** | Draw bounding boxes on scans and ask specific questions |
+| **Medical Image Detection** | [Custom fine-tuned YOLO v8 model](https://github.com/Redluigi1/medical_image_bounding_box_dataset) trained on 300 manually annotated images to detect embedded X-rays, CT scans, MRIs, ultrasounds |
+| **Structured Data Extraction** | Extracts patient info, doctor info, diagnoses, medications, lab results into structured JSON |
+| **Lab Value Analysis** | Identifies abnormal values with patient-friendly explanations via tooltips |
+| **Context-Aware Processing** | Detailed summary extracted first and used as context for image descriptions and lab analysis |
+| **Interactive Image Q&A** | Draw bounding boxes on scans and ask specific questions about selected regions |
 | **Context-Aware Chat** | Ask follow-up questions about the entire report |
 
 ### Multi-Agent Architecture
 
-MARS uses **7 specialized MedGemma agents** orchestrated for different tasks:
+MARS uses **14 specialized MedGemma LLM agents** + **1 CNN model** orchestrated across 5 categories:
 
-1. **Page Classifier** - Determines page type (lab report, prescription, imaging, etc.)
-2. **Tabular Extractor** - Extracts structured data from tables
-3. **Lab Value Analyzer** - Identifies abnormal values and explains significance
-4. **Image Describer** - Generates patient-friendly image descriptions
-5. **Report Summarizer** - Creates comprehensive summaries
-6. **Region Query Agent** - Answers questions about specific image regions
-7. **Medical Image Detector** - Custom fine-tuned YOLO for detecting embedded scans
+#### Classification Agents
+| # | Agent | Method | Description |
+|---|-------|--------|-------------|
+| 1 | **Report Page Classifier** | `is_report_page()` | Classifies page type (lab report, prescription, bill, etc.) with confidence |
+| 2 | **Medical Image Confirmer** | `confirm_medical_image()` | LLM second opinion on whether a YOLO-cropped sub-image is a valid medical scan |
+
+#### Data Extraction Agents
+| # | Agent | Method | Description |
+|---|-------|--------|-------------|
+| 3 | **Tabular Data Extractor** | `extract_report_tabular_data()` | Extracts structured tables from report pages into JSON |
+| 4 | **Lab Value Deviation Analyzer** | `analyze_lab_value_deviations()` | Flags abnormal lab values (high/low) with patient-friendly explanations |
+| 5 | **Detailed Summary Extractor** | `extract_detailed_summary()` | Generates a thorough report summary; extracted first and used as context for other agents |
+| 6 | **Patient & Doctor Info Extractor** | `extract_patient_and_doctor_info()` | Extracts patient name/age/sex and doctor name/phone/email from images |
+| 7 | **Patient History Extractor** | `extract_patient_history_from_text()` | Extracts past conditions, allergies, and previous treatments |
+| 8 | **Report Summary Extractor** | `extract_report_summary()` | Extracts findings, diagnosis, patient explanation, and recommendations |
+| 9 | **Medications & Appointments Extractor** | `extract_medications_and_appointments()` | Extracts prescribed meds, dosages, frequency, and follow-up dates |
+| 10 | **Medications & Appointments (Text)** | `extract_medications_and_appointments_from_text()` | Extracts prescribed meds, dosages, frequency, and follow-up dates from summary text |
+| 11 | **Patient & Doctor Info (Text)** | `extract_patient_and_doctor_info_from_text()` | Extracts patient name/age/sex and doctor name/phone/email from summary text |
+
+#### Image Agent
+| # | Agent | Method | Description |
+|---|-------|--------|-------------|
+| 12 | **Medical Image Describer** | `describe_medical_image()` | Generates short caption + patient-friendly description using summary as context |
+
+#### Utility Agent
+| # | Agent | Method | Description |
+|---|-------|--------|-------------|
+| 13 | **LLM Response Cleanup** | `_cleanup_llm_response()` | Second LLM call to extract valid JSON from a malformed first response (fallback) |
+
+#### Interactive Agent
+| # | Agent | Method | Description |
+|---|-------|--------|-------------|
+| 14 | **Image Region Query** | `query_image_region()` | Draws bounding box on user-selected region, sends annotated image to LLM for focused analysis |
+
+#### CNN Model (Non-LLM)
+| | Model | Method | Description |
+|---|-------|--------|-------------|
+| -- | **YOLO Medical Image Detector** | `get_bounding_boxes()` | Fine-tuned YOLO v8 model that detects medical image regions on each PDF page |
+
+> See the full interactive agent reference at [agents.html](agents.html).
 
 ---
 
@@ -60,32 +94,38 @@ flowchart TB
     end
 
     subgraph Step2["STEP 2: Extract Context First"]
-        DETAILED["Report Summarizer Agent<br/><i>Generates a detailed text summary<br/>of the entire report</i>"]
+        DETAILED["#5 Detailed Summary Extractor<br/><i>Generates a detailed text summary<br/>of the entire report (used as context)</i>"]
         style DETAILED fill:#fff3cd,stroke:#ffc107
     end
 
     subgraph Step3["STEP 3: Per-Page Processing"]
         direction TB
-        PAGECLASSIFY["Page Classifier Agent<br/><i>Classifies each page as<br/>lab report, prescription, imaging, etc.</i>"]
+        PAGECLASSIFY["#1 Report Page Classifier<br/><i>Classifies each page as<br/>lab report, prescription, imaging, etc.</i>"]
         
-        PAGECLASSIFY -->|"Lab/Report Page"| TABULAR["Tabular Extractor Agent<br/><i>Extracts structured tables<br/>from report pages</i>"]
+        PAGECLASSIFY -->|"Lab/Report Page"| TABULAR["#3 Tabular Data Extractor<br/><i>Extracts structured tables<br/>from report pages</i>"]
         
-        YOLO["Medical Image Detector<br/><i>Fine-tuned YOLO v8 model detects<br/>embedded X-rays, CT scans, MRIs</i>"]
-        YOLO --> CROP["Sub-Image Extractor<br/><i>Crops detected regions<br/>from the page</i>"]
-        CROP --> CONFIRM["Image Confirmation Agent<br/><i>Verifies cropped region is<br/>a valid medical image</i>"]
-        CONFIRM -->|"Confirmed"| DESCRIBE["Image Describer Agent<br/><i>Generates patient-friendly<br/>description of the scan</i>"]
+        YOLO["YOLO Medical Image Detector<br/><i>Fine-tuned YOLO v8 CNN<br/>detects embedded scans</i>"]
+        YOLO --> CROP["Sub-Image Extractor<br/><i>Crops detected regions</i>"]
+        CROP --> CONFIRM["#2 Medical Image Confirmer<br/><i>LLM verifies cropped region<br/>is a valid medical image</i>"]
+        CONFIRM -->|"Confirmed"| DESCRIBE["#12 Medical Image Describer<br/><i>Generates patient-friendly<br/>caption + description</i>"]
     end
 
     subgraph Step4["STEP 4: Structured Data Extraction"]
         direction TB
-        PATDOC["Patient & Doctor<br/>Info Extractor<br/><i>Extracts names, age, contact details</i>"]
-        HISTORY["Patient History Extractor<br/><i>Extracts medical history<br/>from the summary text</i>"]
-        MEDS["Medications & Appointments<br/>Extractor<br/><i>Extracts prescribed drugs,<br/>dosages, follow-up dates</i>"]
-        SUMMARY["Report Summary Generator<br/><i>Creates a concise summary with<br/>findings, diagnosis, recommendations</i>"]
+        PATDOC["#6 Patient & Doctor<br/>Info Extractor<br/><i>Extracts names, age, contact details</i>"]
+        HISTORY["#7 Patient History Extractor<br/><i>Extracts medical history<br/>from the summary text</i>"]
+        MEDS["#9 Medications & Appointments<br/>Extractor<br/><i>Extracts prescribed drugs,<br/>dosages, follow-up dates</i>"]
+        SUMMARY["#8 Report Summary Extractor<br/><i>Creates a concise summary with<br/>findings, diagnosis, recommendations</i>"]
+        PATDOC_TEXT["#11 Patient & Doctor Info<br/>(from summary text)"]
+        MEDS_TEXT["#10 Medications & Appointments<br/>(from summary text)"]
     end
 
     subgraph Step5["STEP 5: Lab Analysis"]
-        LABANALYZE["Lab Value Analyzer Agent<br/><i>Identifies abnormal values and<br/>generates patient-friendly explanations</i>"]
+        LABANALYZE["#4 Lab Value Deviation Analyzer<br/><i>Flags abnormal values and<br/>generates patient-friendly explanations</i>"]
+    end
+
+    subgraph Utility["UTILITY"]
+        CLEANUP["#13 LLM Response Cleanup<br/><i>Fallback: extracts valid JSON<br/>from malformed LLM responses</i>"]
     end
 
     subgraph Outputs["THREE JSON OUTPUTS"]
@@ -96,7 +136,7 @@ flowchart TB
     end
 
     subgraph Interactive["INTERACTIVE - Runtime"]
-        REGION["Region Query Agent<br/><i>User draws a bounding box on a scan<br/>and asks a specific question</i>"]
+        REGION["#14 Image Region Query<br/><i>User draws a bounding box on a scan<br/>and asks a specific question</i>"]
         CHAT["Context-Aware Chat<br/><i>Ask follow-up questions<br/>about the entire report</i>"]
     end
 
@@ -110,12 +150,23 @@ flowchart TB
     DETAILED -.->|"provides context"| DESCRIBE
     DETAILED -.->|"input text"| HISTORY
     DETAILED -.->|"input text"| MEDS
+    DETAILED -.->|"input text"| MEDS_TEXT
+    DETAILED -.->|"input text"| PATDOC_TEXT
+
+    %% Text-only alternatives
+    PATDOC -.->|"alternative"| PATDOC_TEXT
+    MEDS -.->|"alternative"| MEDS_TEXT
 
     %% Context: report_summary used by
     SUMMARY -.->|"provides context"| LABANALYZE
 
     %% Tabular to Lab Analysis
     TABULAR --> LABANALYZE
+
+    %% Cleanup utility
+    CLEANUP -.->|"JSON repair fallback"| TABULAR
+    CLEANUP -.->|"JSON repair fallback"| PATDOC
+    CLEANUP -.->|"JSON repair fallback"| SUMMARY
 
     %% Outputs
     PATDOC --> JSON1
@@ -135,6 +186,7 @@ flowchart TB
 
     %% Styling
     style Step2 fill:#fff3cd,stroke:#ffc107
+    style Utility fill:#fef3c7,stroke:#f59e0b
     style Outputs fill:#d4edda,stroke:#28a745
     style Interactive fill:#e3f2fd,stroke:#2196f3
 ```
@@ -331,29 +383,7 @@ Access the app at: `http://localhost:5173`
 }
 ```
 
----
 
-## Key Features Explained
-
-### 1. Custom Fine-tuned YOLO for Medical Image Detection
-- **Manually created dataset** of 300 annotated medical report images
-- Trained to detect X-rays, CT scans, MRIs, ultrasounds embedded in PDFs
-- Dataset and training code: [github.com/Redluigi1/medical_image_bounding_box_dataset](https://github.com/Redluigi1/medical_image_bounding_box_dataset)
-
-### 2. Context-Aware Processing
-- **detailed_summary** extracted first and used as context for image descriptions
-- **report_summary** used as context for lab value analysis
-- Ensures coherent, contextually relevant outputs
-
-### 3. Interactive Region Query
-- Click and drag on any medical image to select a region
-- Ask specific questions like "What is this?" or "Is this normal?"
-- Backend annotates the image and sends to MedGemma for focused analysis
-
-### 4. Abnormal Value Tooltips
-- Lab values outside reference ranges are highlighted
-- Hover to see patient-friendly explanations
-- Powered by MedGemma's medical understanding
 
 ---
 
